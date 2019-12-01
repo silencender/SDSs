@@ -47,6 +47,6 @@ Client与Worker：CalcReq、CalcRes(Client向Worker发送计算请求以及响�
 ### Todo
 1.Workerlist链表的维护，以及无worker时对client的响应  
 2.计算错误类型的扩展  
-3.心跳包功能
-4.最终的测试利用shell脚本批量运行client.go即可
-5.还有啥忘了给，遇到了再说，初稿初稿
+3.心跳包功能  
+4.最终的测试利用shell脚本批量运行client.go即可  
+5.还有啥忘了给，遇到了再说，初稿初稿  
