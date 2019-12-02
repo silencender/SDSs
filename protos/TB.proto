@@ -1,0 +1,6 @@
+syntax = "proto3";
+package protos;
+
+message TestMessage {
+  int32 id = 1;
+}
