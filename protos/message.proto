@@ -1,18 +1,6 @@
 syntax = "proto3";
 package protos;
 
-message QueryRequest {
-
-}
-
-message QueryResponse {
-
-}
-
-message TaskRequest {
-
-}
-
-message TaskResponse {
-
+message Messsage {
+    
 }

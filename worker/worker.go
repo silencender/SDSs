@@ -1,9 +1,29 @@
 package worker
 
 import (
-	"net"
+	. "github.com/silencender/SDSs/utils"
 )
 
 type Worker struct {
-	socket net.Conn
+	master Node
+}
+
+func (worker *Worker) register() {
+
+}
+
+func (worker *Worker) receive(client *Node) {
+
+}
+
+func (worker *Worker) send(client *Node) {
+
+}
+
+func (worker *Worker) run() {
+
+}
+
+func startWorker() {
+
 }

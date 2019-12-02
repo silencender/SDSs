@@ -1,1 +1,5 @@
 package master
+
+func StartMaster() {
+
+}
