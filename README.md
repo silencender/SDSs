@@ -1,5 +1,7 @@
 # SDSs
+
 Simple Distributed Systems
+
 ## 2019/12/1
 
 ### 运行条件
@@ -55,3 +57,11 @@ Client与Worker：CalcReq、CalcRes(Client向Worker发送计算请求以及响�
 ![Master](https://github.com/Xynnn007/SDSs/blob/master/screenShot/master.png)  
 ![Worker](https://github.com/Xynnn007/SDSs/blob/master/screenShot/worker.png)  
 ![Client](https://github.com/Xynnn007/SDSs/blob/master/screenShot/client.png)  
+=======
+
+## How to start
+
+~~~bash
+$ go get github.com/silencender/SDSs
+~~~
+
