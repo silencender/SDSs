@@ -5,6 +5,7 @@ import (
 )
 
 type Worker struct {
+	port   int
 	master Node
 }
 
