@@ -7,7 +7,7 @@ import (
 )
 
 type WorkerManager struct {
-	workers    list.List
+	workers    *list.List
 	pworker    *list.Element
 	register   chan *Node
 	unregister chan *Node
@@ -18,6 +18,10 @@ func (wm *WorkerManager) receive(worker *Node) {
 }
 
 func (wm *WorkerManager) send(worker *Node) {
+
+}
+
+func (wm *WorkerManager) listen() {
 
 }
 

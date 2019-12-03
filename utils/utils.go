@@ -5,20 +5,27 @@ import (
 )
 
 const (
-	MasterAddr = "localhost:12345"
+	MasterAddrToC = "localhost:12345"
+	MasterAddrToW = "localhost:12346"
 )
 
 type Node struct {
-	socket net.Conn
-	ok     bool
-	info   net.Addr
-	data   chan []byte
+	Socket net.Conn
+	Ok     bool
+	Info   net.Addr
+	Data   chan []byte
 }
 
-func (node *Node) close() {
-	if node.ok {
-		node.ok = false
-		close(node.data)
-		node.socket.Close()
+func (node *Node) Open() {
+	if !node.Ok {
+		node.Ok = true
+	}
+}
+
+func (node *Node) Close() {
+	if node.Ok {
+		node.Ok = false
+		close(node.Data)
+		node.Socket.Close()
 	}
 }
