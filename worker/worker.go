@@ -1,30 +1,13 @@
 package worker
 
-import (
-	. "github.com/silencender/SDSs/utils"
-)
-
 type Worker struct {
-	port   int
-	master Node
+	addr string
 }
 
-func (worker *Worker) register() {
-
+func NewWorker(addr string) *Worker {
+	worker := Worker{addr: addr}
+	return &worker
 }
 
-func (worker *Worker) receive(client *Node) {
-
-}
-
-func (worker *Worker) send(client *Node) {
-
-}
-
-func (worker *Worker) run() {
-
-}
-
-func startWorker() {
-
+func (worker *Worker) StartWorker() {
 }

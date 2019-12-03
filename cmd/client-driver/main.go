@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	client := &client.Client{}
-	client.StartClient()
+	c := client.NewClient()
+	c.StartClient()
 }

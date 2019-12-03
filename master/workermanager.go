@@ -21,7 +21,7 @@ func (wm *WorkerManager) send(worker *Node) {
 
 }
 
-func (wm *WorkerManager) listen() {
+func (wm *WorkerManager) listen(addr string) {
 
 }
 

@@ -10,6 +10,11 @@ import (
 type Client struct {
 }
 
+func NewClient() *Client {
+	client := Client{}
+	return &client
+}
+
 func (client *Client) StartClient() {
 	fmt.Println("Client running")
 	conn, err := net.Dial("tcp", MasterAddrToC)

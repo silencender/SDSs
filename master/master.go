@@ -20,7 +20,7 @@ func StartMaster() {
 		unregister: make(chan *Node),
 	}
 	go cm.run()
-	go cm.listen()
+	go cm.listen(MasterAddrToC)
 	go wm.run()
-	go wm.listen()
+	go wm.listen(MasterAddrToW)
 }

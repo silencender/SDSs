@@ -40,8 +40,8 @@ func (cm *ClientManager) send(client *Node) {
 	}
 }
 
-func (cm *ClientManager) listen() {
-	listener, err := net.Listen("tcp", MasterAddrToC)
+func (cm *ClientManager) listen(addr string) {
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		fmt.Println(err)
 	}
