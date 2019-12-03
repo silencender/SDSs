@@ -3,12 +3,13 @@ package main
 
 import (
 	"fmt"
-	"./pb"
+	"local/RPC/pb"
 	"flag"
 	"time"
 	"github.com/golang/protobuf/proto"
 	"net"
 	"strconv"
+
 )
 
 func main() {
@@ -54,18 +55,15 @@ func main() {
 	//接收master回复的数据
 	//注意，这里还需要新定义一个字段表示master这里没有worker了
 	data := make([]byte, 1024)
+
 	var workerIP string
 	for {
-		loop:
-		n, err := conn.Read(data) //接收服务器的请求
+
+		_, err := conn.Read(data) //接收服务器的请求
 		if err != nil {
 			fmt.Println("conn.Read err = ", err)
 			return
 		}
-		if n == 0 {
-			goto loop
-		}
-
 
 		//解包
 		message := &pb.Message{}
@@ -156,16 +154,16 @@ func main() {
 	//完了要关闭
 	defer conn1.Close()
 	conn1.Write([]byte(calcReqData))
-	ansdata := make([]byte, 512)
+	ansBuf := make([]byte, 1024)
 	for {
-		_, err := conn1.Read(ansdata) //接收服务器的请求
+		_, err := conn1.Read(ansBuf) //接收服务器的请求
 		if err != nil {
 			fmt.Println("conn.Read err = ", err)
 			return
 		}
 
 		ansmsg := &pb.Message{}
-		proto.Unmarshal(ansdata, ansmsg)
+		proto.Unmarshal(ansBuf, ansmsg)
 		calcResMessage := ansmsg.GetCalcres()
 		switch calcResMessage.Type {
 		case pb.CalculateTypes_INTEGER32:

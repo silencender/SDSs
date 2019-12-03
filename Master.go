@@ -3,11 +3,10 @@ package main
 import (
 	"fmt"
 	"net"
-	"./pb"
-	"github.com/golang/protobuf/proto"
+	"local/RPC/pb"
 	"container/list"
-
 	"strings"
+	"github.com/golang/protobuf/proto"
 )
 //用于记录worker的全局链表头, p用于遍历
 
@@ -24,7 +23,7 @@ func HandleConn(conn net.Conn) {
 	addr := conn.RemoteAddr().String()
 	fmt.Println(addr, " conncet sucessful")
 
-	data := make([]byte, 2048)
+	data := make([]byte, 1024)
 
 	for {
 		//读取包
@@ -38,6 +37,7 @@ func HandleConn(conn net.Conn) {
 		err = proto.Unmarshal(data,message)
 		if err != nil {
 			fmt.Println(err)
+
 		}
 		seq := message.Seq
 		//开始判断字段
@@ -98,7 +98,7 @@ func HandleConn(conn net.Conn) {
 			fmt.Println(err)
 		}
 		conn.Write([]byte(data))
-		fmt.Println("a new calculate request has been passed to" + workerAddr)
+		fmt.Println("a new calculate request has been passed to " + workerAddr)
 		return
 
 	}
@@ -112,7 +112,8 @@ func main() {
 		fmt.Println("err = ", err)
 		return
 	}
-
+	println("Starting listening port 3742...")
+	//提示
 	defer listener.Close()
 	//创建一个链表用于记录worker
 	workList = list.New()
