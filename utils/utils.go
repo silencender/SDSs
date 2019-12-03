@@ -1,7 +1,10 @@
 package utils
 
 import (
+	"fmt"
 	"net"
+	"os"
+	"os/signal"
 )
 
 const (
@@ -29,4 +32,17 @@ func (node *Node) Close() {
 		close(node.Data)
 		node.Socket.Close()
 	}
+}
+
+func WaitForINT(callback func()) {
+	signalChan := make(chan os.Signal, 1)
+	block := make(chan struct{})
+	signal.Notify(signalChan, os.Interrupt)
+	go func() {
+		<-signalChan
+		fmt.Println("Keyboad interrupt. Doing cleaning jobs...")
+		callback()
+		close(block)
+	}()
+	<-block
 }

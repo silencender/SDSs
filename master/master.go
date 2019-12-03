@@ -1,6 +1,7 @@
 package master
 
 import (
+	"container/list"
 	"fmt"
 
 	. "github.com/silencender/SDSs/utils"
@@ -12,6 +13,14 @@ func StartMaster() {
 		register:   make(chan *Node),
 		unregister: make(chan *Node),
 	}
+	wm := WorkerManager{
+		workers:    list.New(),
+		pworker:    nil,
+		register:   make(chan *Node),
+		unregister: make(chan *Node),
+	}
 	go cm.run()
-	cm.listen()
+	go cm.listen()
+	go wm.run()
+	go wm.listen()
 }
