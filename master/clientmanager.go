@@ -14,7 +14,7 @@ type ClientManager struct {
 
 func (cm *ClientManager) receive(client *Node) {
 	for {
-		message := make([]byte, 1024)
+		message := make([]byte, BufSize)
 		length, err := client.Socket.Read(message)
 		if err != nil {
 			cm.unregister <- client

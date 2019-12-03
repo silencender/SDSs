@@ -7,6 +7,7 @@ import (
 const (
 	MasterAddrToC = "localhost:12345"
 	MasterAddrToW = "localhost:12346"
+	BufSize       = 1024
 )
 
 type Node struct {

@@ -28,7 +28,7 @@ func (cn *ClientNode) query() {
 
 func (cn *ClientNode) receive(worker *Node) {
 	for {
-		message := make([]byte, 1024)
+		message := make([]byte, BufSize)
 		length, err := cn.master.Socket.Read(message)
 		if err != nil {
 			break
