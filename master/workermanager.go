@@ -3,7 +3,7 @@ package master
 import (
 	"container/list"
 
-	. "github.com/silencender/SDSs/utils"
+	. "SDSs/utils"
 )
 
 type WorkerManager struct {

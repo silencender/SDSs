@@ -1,7 +1,7 @@
 package main
 
 import (
-    "SDSs/client"
+    "github.com/silencender/SDSs/client"
     "fmt"
 )
 

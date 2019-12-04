@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"net"
 
-	. "github.com/silencender/SDSs/utils"
+	. "SDSs/utils"
+    "SDSs/protos"
+    "github.com/golang/protobuf/proto"
 )
 
 type ClientManager struct {
@@ -21,8 +23,16 @@ func (cm *ClientManager) receive(client *Node) {
 			break
 		}
 		if length > 0 {
-			fmt.Printf("Received from client %s: %s", client.Info.String(), string(message))
+            data := &protos.Message{}
+            proto.Unmarshal(message,data)
+            fmt.Printf("Received from client %s: %s", client.Info.String(), data)
 			client.ReqData <- message
+            res := &protos.Message{
+                MsgType : protos.Message_QUERY_RES,
+                Socket : "localhost:23456",
+            }
+            rdata,_ := proto.Marshal(res)
+            client.Socket.Write([]byte(rdata))
 		}
 	}
 
@@ -31,7 +41,10 @@ func (cm *ClientManager) receive(client *Node) {
 func (cm *ClientManager) handle(client *Node) {
 	for {
 		select {
-		case req := <-client.ReqData:
+		case req, ok := <-client.ReqData:
+			if !ok {
+				return
+			}
 			client.ResData <- []byte("Master response: " + string(req))
 		}
 	}
@@ -79,3 +92,4 @@ func (cm *ClientManager) run() {
 		}
 	}
 }
+

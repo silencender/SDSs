@@ -1,18 +1,31 @@
 package master
 
 import (
-    . "SDSs/utils"
+	//"container/list"
+	"fmt"
+
+	. "SDSs/utils"
 )
 
 func StartMaster() {
-    listener,err := net.Listen("tcp",MasterAddr)
-    if err!= nil{
-        fmt.Println("err = ",err)
-        return
-    }
-    defer listener.Close()
-    clientmanager = &ClientManager{}
-    workermanager = &WorkerManager{}
-    clientmanager.run()
-    workermanager.run()
+	fmt.Println("Master running")
+	cm := ClientManager{
+		register:   make(chan *Node),
+		unregister: make(chan *Node),
+	}
+	/*******
+    wm := WorkerManager{
+		workers:    list.New(),
+		pworker:    nil,
+		register:   make(chan *Node),
+		unregister: make(chan *Node),
+	}
+    **********/
+	go cm.run()
+	go cm.listen(MasterAddrToC)
+	/************
+    go wm.run()
+	go wm.listen(MasterAddrToW)
+    *************/
 }
+
