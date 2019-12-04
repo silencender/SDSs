@@ -22,16 +22,25 @@ func (cm *ClientManager) receive(client *Node) {
 		}
 		if length > 0 {
 			fmt.Printf("Received from client %s: %s", client.Info.String(), string(message))
-			client.ReqData <- []byte("Master response: " + string(message))
+			client.ReqData <- message
 		}
 	}
 
 }
 
+func (cm *ClientManager) handle(client *Node) {
+	for {
+		select {
+		case req := <-client.ReqData:
+			client.ResData <- []byte("Master response: " + string(req))
+		}
+	}
+}
+
 func (cm *ClientManager) send(client *Node) {
 	for {
 		select {
-		case message, ok := <-client.ReqData:
+		case message, ok := <-client.ResData:
 			if !ok {
 				return
 			}
@@ -53,6 +62,7 @@ func (cm *ClientManager) listen(addr string) {
 		client := NewNode(conn)
 		cm.register <- client
 		go cm.receive(client)
+		go cm.handle(client)
 		go cm.send(client)
 	}
 }
