@@ -22,7 +22,7 @@ func (cm *ClientManager) receive(client *Node) {
 		}
 		if length > 0 {
 			fmt.Printf("Received from client %s: %s", client.Info.String(), string(message))
-			client.Data <- []byte("Master response: " + string(message))
+			client.ReqData <- []byte("Master response: " + string(message))
 		}
 	}
 
@@ -31,7 +31,7 @@ func (cm *ClientManager) receive(client *Node) {
 func (cm *ClientManager) send(client *Node) {
 	for {
 		select {
-		case message, ok := <-client.Data:
+		case message, ok := <-client.ReqData:
 			if !ok {
 				return
 			}
@@ -50,12 +50,7 @@ func (cm *ClientManager) listen(addr string) {
 		if err != nil {
 			fmt.Println(err)
 		}
-		client := &Node{
-			Socket: conn,
-			Ok:     false,
-			Info:   conn.RemoteAddr(),
-			Data:   make(chan []byte),
-		}
+		client := NewNode(conn)
 		cm.register <- client
 		go cm.receive(client)
 		go cm.send(client)

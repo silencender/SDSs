@@ -14,10 +14,21 @@ const (
 )
 
 type Node struct {
-	Socket net.Conn
-	Ok     bool
-	Info   net.Addr
-	Data   chan []byte
+	Socket  net.Conn
+	Ok      bool
+	Info    net.Addr
+	ReqData chan []byte
+	ResData chan []byte
+}
+
+func NewNode(conn net.Conn) *Node {
+	return &Node{
+		Socket:  conn,
+		Ok:      false,
+		Info:    conn.RemoteAddr(),
+		ReqData: make(chan []byte),
+		ResData: make(chan []byte),
+	}
 }
 
 func (node *Node) Open() {
@@ -29,7 +40,8 @@ func (node *Node) Open() {
 func (node *Node) Close() {
 	if node.Ok {
 		node.Ok = false
-		close(node.Data)
+		close(node.ReqData)
+		close(node.ResData)
 		node.Socket.Close()
 	}
 }
