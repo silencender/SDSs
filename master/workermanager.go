@@ -23,6 +23,7 @@ func (wm *WorkerManager) receive(worker *Node) {
 		length, err := worker.Socket.Read(message)
 		if err != nil {
 			wm.unregister <- worker
+			close(worker.ReqData)
 			break
 		}
 		if length > 0 {
@@ -36,6 +37,7 @@ func (wm *WorkerManager) handle(worker *Node) {
 		select {
 		case req, ok := <-worker.ReqData:
 			if !ok {
+				close(worker.ResData)
 				return
 			}
 			message := &pb.Message{}

@@ -42,8 +42,6 @@ func (node *Node) Open() {
 func (node *Node) Close() {
 	if node.Ok {
 		node.Ok = false
-		close(node.ReqData)
-		close(node.ResData)
 		node.Socket.Close()
 	}
 }

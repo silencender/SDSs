@@ -21,6 +21,7 @@ func (cm *ClientManager) receive(client *Node) {
 		length, err := client.Socket.Read(message)
 		if err != nil {
 			cm.unregister <- client
+			close(client.ReqData)
 			break
 		}
 		if length > 0 {
@@ -35,6 +36,7 @@ func (cm *ClientManager) handle(client *Node) {
 		select {
 		case req, ok := <-client.ReqData:
 			if !ok {
+				close(client.ResData)
 				return
 			}
 			message := &pb.Message{}
