@@ -1,37 +1,66 @@
 package master
 
 import (
-	"fmt"
+	"log"
 	"net"
 
+	"github.com/golang/protobuf/proto"
+	pb "github.com/silencender/SDSs/protos"
 	. "github.com/silencender/SDSs/utils"
 )
 
 type ClientManager struct {
+	wm         *WorkerManager
 	register   chan *Node
 	unregister chan *Node
 }
 
 func (cm *ClientManager) receive(client *Node) {
+	message := make([]byte, BufSize)
 	for {
-		message := make([]byte, BufSize)
 		length, err := client.Socket.Read(message)
 		if err != nil {
 			cm.unregister <- client
 			break
 		}
 		if length > 0 {
-			fmt.Printf("Received from client %s: %s", client.Info.String(), string(message))
-			client.Data <- []byte("Master response: " + string(message))
+			client.ReqData <- message
 		}
 	}
 
 }
 
+func (cm *ClientManager) handle(client *Node) {
+	for {
+		select {
+		case req, ok := <-client.ReqData:
+			if !ok {
+				return
+			}
+			message := &pb.Message{}
+			err := proto.Unmarshal(req, message)
+			PrintIfErr(err)
+			res := &pb.Message{
+				Seq: message.GetSeq(),
+			}
+			switch message.MsgType {
+			case pb.Message_REGISTER_REQ:
+				res.MsgType = pb.Message_REGISTER_RES
+			case pb.Message_QUERY_REQ:
+				res.MsgType = pb.Message_QUERY_RES
+				res.Socket = cm.wm.SelectWorker().Info.String()
+			}
+			data, err := proto.Marshal(res)
+			PrintIfErr(err)
+			client.ResData <- data
+		}
+	}
+}
+
 func (cm *ClientManager) send(client *Node) {
 	for {
 		select {
-		case message, ok := <-client.Data:
+		case message, ok := <-client.ResData:
 			if !ok {
 				return
 			}
@@ -42,22 +71,14 @@ func (cm *ClientManager) send(client *Node) {
 
 func (cm *ClientManager) listen(addr string) {
 	listener, err := net.Listen("tcp", addr)
-	if err != nil {
-		fmt.Println(err)
-	}
+	PrintIfErr(err)
 	for {
 		conn, err := listener.Accept()
-		if err != nil {
-			fmt.Println(err)
-		}
-		client := &Node{
-			Socket: conn,
-			Ok:     false,
-			Info:   conn.RemoteAddr(),
-			Data:   make(chan []byte),
-		}
+		PrintIfErr(err)
+		client := NewNode(conn)
 		cm.register <- client
 		go cm.receive(client)
+		go cm.handle(client)
 		go cm.send(client)
 	}
 }
@@ -67,10 +88,10 @@ func (cm *ClientManager) run() {
 		select {
 		case conn := <-cm.register:
 			conn.Open()
-			fmt.Printf("Client %s registered\n", conn.Info.String())
+			log.Printf("Client %s registered\n", conn.Info.String())
 		case conn := <-cm.unregister:
 			conn.Close()
-			fmt.Printf("Client %s unregistered\n", conn.Info.String())
+			log.Printf("Client %s unregistered\n", conn.Info.String())
 		}
 	}
 }

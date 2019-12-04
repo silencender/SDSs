@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"container/list"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -14,10 +16,21 @@ const (
 )
 
 type Node struct {
-	Socket net.Conn
-	Ok     bool
-	Info   net.Addr
-	Data   chan []byte
+	Socket  net.Conn
+	Ok      bool
+	Info    net.Addr
+	ReqData chan []byte
+	ResData chan []byte
+}
+
+func NewNode(conn net.Conn) *Node {
+	return &Node{
+		Socket:  conn,
+		Ok:      false,
+		Info:    conn.RemoteAddr(),
+		ReqData: make(chan []byte),
+		ResData: make(chan []byte),
+	}
 }
 
 func (node *Node) Open() {
@@ -29,7 +42,8 @@ func (node *Node) Open() {
 func (node *Node) Close() {
 	if node.Ok {
 		node.Ok = false
-		close(node.Data)
+		close(node.ReqData)
+		close(node.ResData)
 		node.Socket.Close()
 	}
 }
@@ -45,4 +59,23 @@ func WaitForINT(callback func()) {
 		close(block)
 	}()
 	<-block
+}
+
+func PrintIfErr(err error) {
+	if err != nil {
+		log.Println(err.Error())
+	}
+}
+
+func RemoveListItem(l *list.List, item interface{}) {
+	for p := l.Front(); ; {
+		if p.Value == item {
+			l.Remove(p)
+			break
+		}
+		if p == l.Back() {
+			break
+		}
+		p = p.Next()
+	}
 }

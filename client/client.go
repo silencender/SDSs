@@ -22,12 +22,7 @@ func (client *Client) StartClient() {
 		fmt.Println(err)
 	}
 	cn := ClientNode{
-		master: &Node{
-			Socket: conn,
-			Ok:     false,
-			Info:   conn.RemoteAddr(),
-			Data:   make(chan []byte),
-		},
+		master:     NewNode(conn),
 		workerList: make(chan *Node),
 		workerpool: &WorkerPool{
 			workers:    make(map[string]*Node),
