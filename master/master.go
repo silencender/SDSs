@@ -2,20 +2,21 @@ package master
 
 import (
 	"container/list"
-	"fmt"
+	"log"
 
 	. "github.com/silencender/SDSs/utils"
 )
 
 func StartMaster() {
-	fmt.Println("Master running")
-	cm := ClientManager{
-		register:   make(chan *Node),
-		unregister: make(chan *Node),
-	}
+	log.Println("Master running")
 	wm := WorkerManager{
 		workers:    list.New(),
 		pworker:    nil,
+		register:   make(chan *Node),
+		unregister: make(chan *Node),
+	}
+	cm := ClientManager{
+		wm:         &wm,
 		register:   make(chan *Node),
 		unregister: make(chan *Node),
 	}

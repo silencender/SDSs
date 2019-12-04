@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"container/list"
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -57,4 +59,23 @@ func WaitForINT(callback func()) {
 		close(block)
 	}()
 	<-block
+}
+
+func PrintIfErr(err error) {
+	if err != nil {
+		log.Println(err.Error())
+	}
+}
+
+func RemoveListItem(l *list.List, item interface{}) {
+	for p := l.Front(); ; {
+		if p.Value == item {
+			l.Remove(p)
+			break
+		}
+		if p == l.Back() {
+			break
+		}
+		p = p.Next()
+	}
 }
