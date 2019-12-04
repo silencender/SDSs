@@ -9,16 +9,16 @@ const (
 )
 
 type Node struct {
-	socket net.Conn
-	ok     bool
-	info   net.Addr
-	data   chan []byte
+	Socket net.Conn
+	Ok     bool
+	Info   net.Addr
+	Data   chan []byte
 }
 
 func (node *Node) close() {
-	if node.ok {
-		node.ok = false
-		close(node.data)
-		node.socket.Close()
+	if node.Ok {
+		node.Ok = false
+		close(node.Data)
+	    node.Socket.Close()
 	}
 }
