@@ -76,9 +76,7 @@ func (wm *WorkerManager) listen(addr string) {
 	PrintIfErr(err)
 	for {
 		conn, err := listener.Accept()
-		if err != nil {
-			log.Println(err.Error())
-		}
+		PrintIfErr(err)
 		worker := NewNode(conn)
 		wm.register <- worker
 		go wm.receive(worker)
