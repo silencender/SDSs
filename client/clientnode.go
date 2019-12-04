@@ -19,7 +19,7 @@ type WorkerPool struct {
 }
 
 func (cn *ClientNode) register() {
-	cn.master.Data <- []byte("ClientNode hello\n")
+	cn.master.ResData <- []byte("Client hello\n")
 }
 
 func (cn *ClientNode) query() {
@@ -42,7 +42,7 @@ func (cn *ClientNode) receive(worker *Node) {
 func (cn *ClientNode) send(worker *Node) {
 	for {
 		select {
-		case message, ok := <-cn.master.Data:
+		case message, ok := <-cn.master.ResData:
 			if !ok {
 				return
 			}
