@@ -31,7 +31,10 @@ func (cm *ClientManager) receive(client *Node) {
 func (cm *ClientManager) handle(client *Node) {
 	for {
 		select {
-		case req := <-client.ReqData:
+		case req, ok := <-client.ReqData:
+			if !ok {
+				return
+			}
 			client.ResData <- []byte("Master response: " + string(req))
 		}
 	}
