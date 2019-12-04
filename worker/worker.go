@@ -1,7 +1,7 @@
 package worker
 
 import (
-	. "github.com/silencender/SDSs/utils"
+	. "SDSs/utils"
 )
 
 type Worker struct {
