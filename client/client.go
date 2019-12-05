@@ -4,7 +4,7 @@ import (
     . "SDSs/utils"
 	"github.com/silencender/SDSs/protos"
 	"github.com/golang/protobuf/proto"
-    "fmt"
+    "log"
     "net"
     "time"
     "strings"
@@ -13,14 +13,14 @@ import (
 
 type WorkerPool struct {
 	workers    map[string]*Node
-	register   chan *Node 
+	register   chan *Node
 	unregister   chan []byte
 }
 
 type Client struct {
 	Master     Node
 	Pool    WorkerPool
-    QueryList  chan []byte 
+    QueryList  chan []byte
 	WorkerList chan *Node
 }
 
@@ -29,59 +29,109 @@ func (client *Client) register() {
     //持续运行
     for {
         //接受到一个需要注册的workerIP
-        workerIP := string(<- client.Pool.unregister)
+        workerIP := string(<-client.Pool.unregister)
         //建立连接
         conn, err := net.Dial("tcp", workerIP)
         //如果连接不上该怎么处理我还没有想好
         if err != nil {
-            fmt.Println("net.Dial err = ", err,'\t',workerIP)
+            log.Println("net.Dial err = ", err,'\t',workerIP)
+            return
         }
         worker_node := NewNode(conn)
-        worker_node.Ok = true
+        worker_node.Open()
         //添加到worker池
         client.Pool.workers[workerIP] = worker_node
         //返还node
         client.Pool.register <- worker_node
-    } 
+    }
 }
 func (client *Client) query() string {
 	//query数据
     queryReq := &protos.Message{
 		MsgType:protos.Message_QUERY_REQ,
 		Seq: int32(time.Now().Unix()),
-    } 
+    }
 	queryReqData,err := proto.Marshal(queryReq)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	client.Master.Socket.Write([]byte(queryReqData))
 	//接受回复
     data := make([]byte, 1024)
 	_ , err = client.Master.Socket.Read(data) //接收服务器的请求
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 	message := &protos.Message{}
 	err = proto.Unmarshal(data,message)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
     workerIP := message.Socket
     return workerIP
 }
 
-func (client *Client) receive() {
+func (client *Client) receive(worker *Node){
+    message := make([]byte,BufSize)
     for {
+        length,err :=worker.Socket.Read(message)
+        if err != nil{
+            //严格来讲，这里应该有更仔细的异常处理过程
+            log.Println("the worker die out!")
+            return
+        }
+        if length > 0 {
+            worker.ReqData <- message
+        }
+
     }
 }
 
+func (client *Client) handle(worker *Node){
+    for {
+        select {
+        case req,ok := <-worker.ReqData:
+            if !ok {
+                return
+            }
+            message := &protos.Message{}
+            err := proto.Unmarshal(req,message)
+            PrintIfErr(err)
+            calcResMessage := message.GetCalcres()
+            switch calcResMessage.Type {
+            case protos.CalculateTypes_INTEGER32:
+                int32ans := calcResMessage.GetInt32Ans()
+                println("int32")
+                log.Printf("sum = %d, min = %d, mul = %d, div = %d\n", int32ans.AddInt32,
+                    int32ans.MinInt32, int32ans.MulInt32, int32ans.DivInt32)
+            case protos.CalculateTypes_INTEGER64:
+                int64ans := calcResMessage.GetInt64Ans()
+                println("int64")
+                log.Printf("sum = %d, min = %d, mul = %d, div = %d\n", int64ans.AddInt64,
+                    int64ans.MinInt64, int64ans.MulInt64, int64ans.DivInt64)
+            case protos.CalculateTypes_FLOAT32:
+                float32ans := calcResMessage.GetFloat32Ans()
+                println("float32")
+                log.Printf("sum = %f, min = %f, mul = %f, div = %f\n", float32ans.AddFloat32,
+                    float32ans.MinFloat32, float32ans.MulFloat32, float32ans.DivFloat32)
+            case protos.CalculateTypes_FLOAT64:
+                float64ans := calcResMessage.GetFloat64Ans()
+                println("float64")
+                log.Printf("sum = %f, min = %f, mul = %f, div = %f\n", float64ans.AddFloat64,
+                    float64ans.MinFloat64, float64ans.MulFloat64, float64ans.DivFloat64)
+            }
+        }
+    }
+}
+
+//send 太复杂了，应该设计一下提高并行度
 func (client *Client) send() {
     for {
         calcString := <- client.QueryList 
         worker_node := <- client.WorkerList
         t := strings.Split(string(calcString),":")
         calcType,calcOp1,calcOp2 := t[0],t[1],t[2]
-        fmt.Println(calcType,calcOp1,calcOp2)
+        log.Println(calcType,calcOp1,calcOp2)
         //构造calcReq包
 	    calcReq := &protos.Message{
 		    MsgType:protos.Message_CALCULATE_REQ,
@@ -94,11 +144,11 @@ func (client *Client) send() {
             var op1,op2 int
             op1, err := strconv.Atoi(calcOp1)
             if err != nil {
-                fmt.Println(err)
+                log.Println(err)
             }
             op2, err = strconv.Atoi(calcOp2)
             if err != nil {
-                fmt.Println(err)
+                log.Println(err)
             }
             calcReq.Calcreq.Int32Op1 = int32(op1)
             calcReq.Calcreq.Int32Op2 = int32(op2)
@@ -107,11 +157,11 @@ func (client *Client) send() {
             var op1,op2 int64
             op1, err := strconv.ParseInt(calcOp1,10,64)
             if err != nil {
-                fmt.Println(err)
+                log.Println(err)
             }
             op2, err = strconv.ParseInt(calcOp2,10,64)
             if err != nil {
-                fmt.Println(err)
+                log.Println(err)
             }
             calcReq.Calcreq.Int64Op1 = int64(op1)
             calcReq.Calcreq.Int64Op2 = int64(op2)
@@ -120,11 +170,11 @@ func (client *Client) send() {
             var op1,op2 float64
             op1, err := strconv.ParseFloat(calcOp1, 32)
             if err != nil {
-                fmt.Println(err)
+                log.Println(err)
             }
             op2, err = strconv.ParseFloat(calcOp2, 32)
             if err != nil {
-                fmt.Println(err)
+                log.Println(err)
             }
             calcReq.Calcreq.Float32Op1 = float32(op1)
             calcReq.Calcreq.Float32Op2 = float32(op2)
@@ -133,11 +183,11 @@ func (client *Client) send() {
             var op1,op2 float64
             op1, err := strconv.ParseFloat(calcOp1, 64)
             if err != nil {
-                fmt.Println(err)
+                log.Println(err)
             }
             op2, err = strconv.ParseFloat(calcOp2, 64)
             if err != nil {
-                fmt.Println(err)
+                log.Println(err)
             }
             calcReq.Calcreq.Float64Op1 = op1
             calcReq.Calcreq.Float64Op2 = op2
@@ -146,7 +196,7 @@ func (client *Client) send() {
         //把包打成字节流
         calcReqData,err := proto.Marshal(calcReq)
         if err != nil {
-            fmt.Println(err)
+            log.Println(err)
         }
         worker_node.Socket.Write([]byte(calcReqData))
     }
@@ -164,12 +214,14 @@ func (client *Client) Close(){
 func (client *Client) Run(calcType,calcOp1,calcOp2 string) {
     calcString := calcType + ":" + calcOp1 + ":" + calcOp2
     workerIP := client.query()
-    fmt.Println("we've got a worker for :",workerIP)
+    log.Println("we've got a worker for :",workerIP)
     worker_node,OK := client.Pool.workers[workerIP]
     if !OK || !worker_node.Ok{
         client.Pool.unregister <- []byte(workerIP)
         //看似并行，实则顺序执行
         worker_node = <- client.Pool.register
+        go client.receive(worker_node)
+        go client.handle(worker_node)
     }
     client.QueryList <- []byte(calcString)
     client.WorkerList <- worker_node
@@ -179,7 +231,7 @@ func StartClient() Client {
     //建立与master的连接
     conn, err := net.Dial("tcp", MasterAddrToC)
 	if err != nil {
-		fmt.Println("net.Dial err = ", err)
+		log.Println("net.Dial err = ", err)
         //初始化空类client
         client := Client{}
 		return client 
@@ -196,10 +248,9 @@ func StartClient() Client {
 			unregister: make(chan []byte),
 		},
 	}
-    fmt.Println("done")
+    log.Println("done")
     //返回client结构体
-    go client.register()
-    go client.send()
-    go client.receive()
+    go client.register()//处理worker的register
+    go client.send()//处理send request
     return client
 }
