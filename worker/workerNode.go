@@ -14,16 +14,16 @@ type WorkerNode struct {
 	master *Node
 }
 
-func (wn *WorkerNode) register(port string) {
+func (wn *WorkerNode) register(addr string) {
     //结束之后立即关闭	
     //这样可能接受不到master的反馈，不知道会不会报错
     defer wn.master.Socket.Close()
     defer wn.master.Close()
-	log.Println("register to worker for port ",port)
+	log.Println("register to worker for addr ",addr)
     registReq := &pb.Message{
 		MsgType:pb.Message_REGISTER_REQ,
 		Seq: int32(time.Now().Unix()),
-		Socket: port,
+		Socket: addr,
 	}
     registReqData,err := proto.Marshal(registReq)
     PrintIfErr(err)

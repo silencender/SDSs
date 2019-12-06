@@ -48,7 +48,7 @@ func (cm *ClientManager) handle(client *Node) {
 				res.MsgType = pb.Message_REGISTER_RES
 			case pb.Message_QUERY_REQ:
 				res.MsgType = pb.Message_QUERY_RES
-				res.Socket = cm.wm.SelectWorker().Info.String()
+				res.Socket = cm.wm.SelectWorker().UdpAddr
 			}
 			data, err := proto.Marshal(res)
 			PrintIfErr(err)

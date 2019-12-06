@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	w := worker.NewWorker()
+    w := worker.NewWorker("localhost:18888")
 	w.StartWorker()
 	WaitForINT(func() {})
 }
