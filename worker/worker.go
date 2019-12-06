@@ -27,7 +27,7 @@ func (worker *Worker) StartWorker() {
     }
     worker_node.master.Open()
     //之后注册完之后负责关闭连接
-    worker_node.register("18888")
+    worker_node.register(worker.port)
     //负责listen
     //go worker_node.listen(worker.addr)
     //go worker_node.run()
