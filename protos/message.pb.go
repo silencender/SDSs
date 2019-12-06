@@ -17,7 +17,7 @@ It has these top-level messages:
 	CalcRes
 	Message
 */
-package pb
+package protos
 
 import proto "github.com/golang/protobuf/proto"
 
