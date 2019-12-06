@@ -45,7 +45,7 @@ func (wm *WorkerManager) handle(worker *Node) {
 			//}
 			switch message.MsgType {
 			case pb.Message_REGISTER_REQ:
-                wm.register <- worker.UdpAddr
+                wm.register <- message.Socket
                 //res.MsgType = pb.Message_REGISTER_RES
                 //case pb.Message_HEARTBEAT_REQ:
 				//res.MsgType = pb.Message_HEARTBEAT_RES
