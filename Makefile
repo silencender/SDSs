@@ -1,5 +1,4 @@
 all:
-	
 	git add *
 	git commit -m "auto-shell"
 	git push
