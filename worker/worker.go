@@ -27,8 +27,9 @@ func (worker *Worker) StartWorker() {
     //之后注册完之后负责关闭连接
     worker_node.register(worker.addr)
     //负责listen
-    //go worker_node.listen(worker.addr)
-    //负责处理注册
+    go worker_node.receive(worker.addr)
+    //负责返还
+    //go worker_node.send()
     //没有实现，还是没想懂run的必要性
     //go worker_node.run()
 }

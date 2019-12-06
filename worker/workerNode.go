@@ -8,6 +8,8 @@ import (
     "time"
     "log"
     "net"
+    "strings"
+    "strconv"
 )
 
 type WorkerNode struct {
@@ -32,14 +34,18 @@ func (wn *WorkerNode) register(addr string) {
     //事实上不用接到master的反馈也行，虽然定义了
 }
 
-func (wn *WorkerNode) receive(client *Node) {
+func (wn *WorkerNode) receive(addr string) {
+    ip_port := strings.Split(addr,":")
+    ip,port_str := ip_port[0],ip_port[1]
+    port,_ := strconv.Atoi(port_str)
+    ServerConn, _ := net.ListenUDP("udp", &net.UDPAddr{IP:[]byte(ip),Port:port,Zone:""})
     message := make([]byte,BufSize)
     for {
-        length,err :=client.Socket.Read(message)
+        length,addr,err :=ServerConn.ReadFromUDP(message)
         PrintIfErr(err)
         if length >0 {
-            log.Println("received ",length," bytes from ",client.Socket.RemoteAddr)
-            client.ReqData <- message
+            log.Println("received ",length," bytes from ",addr)
+            //client.ReqData <- message
         }
     }
 }
