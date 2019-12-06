@@ -109,6 +109,7 @@ func (wm *WorkerManager) SelectWorker() string {
 			wm.pworker = wm.pworker.Next()
 		}
         worker := wm.pworker.Value.(string)
-		return worker
+        log.Println("I will give u worker: ",worker)
+        return worker
 	}
 }

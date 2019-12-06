@@ -27,7 +27,8 @@ func (wn *WorkerNode) register(addr string) {
 	}
     registReqData,err := proto.Marshal(registReq)
     PrintIfErr(err)
-	wn.master.Socket.Write([]byte(registReqData))
+	log.Println(registReq.Socket)
+    wn.master.Socket.Write([]byte(registReqData))
     //事实上不用接到master的反馈也行，虽然定义了
 }
 
