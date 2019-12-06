@@ -80,7 +80,8 @@ func (wm *WorkerManager) listen(addr string) {
 			log.Println(err.Error())
 		}
 		worker := NewNode(conn)
-		go wm.receive(worker)
+		worker.Open()
+        go wm.receive(worker)
 		go wm.handle(worker)
 		go wm.send(worker)
 	}
