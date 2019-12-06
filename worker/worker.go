@@ -4,6 +4,7 @@ import (
     . "github.com/silencender/SDSs/utils"
     "log"
     "net"
+    "strings"
 )
 
 type Worker struct {
@@ -16,8 +17,10 @@ func NewWorker(port string) *Worker {
 }
 
 func (worker *Worker) StartWorker() {
-    log.Println("Worker running in ",worker.port)
     conn,err := net.Dial("tcp",MasterAddrToW)
+    worker.port = conn.LocalAddr().String()
+    log.Println("Worker running in ",worker.port)
+    worker.port = strings.Split(worker.port,":")[1]
     PrintIfErr(err)
     worker_node := &WorkerNode{
         master : NewNode(conn),
