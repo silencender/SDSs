@@ -1,5 +1,5 @@
 syntax = "proto3";
-package protos;
+package pb;
 
 enum CalculateTypes {
         INTEGER32 = 0;
@@ -89,4 +89,5 @@ message Message{
 }
 
 //client向worker发送计算请求
+
 
