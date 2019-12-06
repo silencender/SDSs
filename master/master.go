@@ -12,7 +12,7 @@ func StartMaster() {
 	wm := WorkerManager{
 		workers:    list.New(),
 		pworker:    nil,
-		register:   make(chan *Node),
+		register:   make(chan string),
 		unregister: make(chan *Node),
 	}
 	cm := ClientManager{
