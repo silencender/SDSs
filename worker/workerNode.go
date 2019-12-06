@@ -38,7 +38,8 @@ func (wn *WorkerNode) receive(addr string) {
     ip_port := strings.Split(addr,":")
     ip,port_str := ip_port[0],ip_port[1]
     port,_ := strconv.Atoi(port_str)
-    ServerConn, _ := net.ListenUDP("udp", &net.UDPAddr{IP:[]byte(ip),Port:port,Zone:""})
+    ServerConn,err := net.ListenUDP("udp", &net.UDPAddr{IP:[]byte(ip),Port:port,Zone:""})
+    PrintIfErr(err)
     message := make([]byte,BufSize)
     for {
         length,addr,err :=ServerConn.ReadFromUDP(message)
