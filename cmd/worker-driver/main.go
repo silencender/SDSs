@@ -6,9 +6,7 @@ import (
 )
 
 func main() {
-	port := 12330
-	//addr := "localhost:" + string(port)
-	w := worker.NewWorker(string(port))
+	w := worker.NewWorker()
 	w.StartWorker()
 	WaitForINT(func() {})
 }
