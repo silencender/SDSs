@@ -14,6 +14,9 @@ import (
 
 type WorkerNode struct {
 	master *Node
+    ReqData chan []byte
+    ResData chan []byte
+    ResAddr chan *net.UDPAddr
 }
 
 func (wn *WorkerNode) register(addr string) {
@@ -47,7 +50,8 @@ func (wn *WorkerNode) receive(addr string) {
         PrintIfErr(err)
         if length >0 {
             log.Println("received ",length," bytes from ",addr)
-            //client.ReqData <- message
+            wn.ReqData <- message
+            wn.ResAddr <- addr
         }
     }
 }
@@ -215,14 +219,17 @@ func (wn *WorkerNode) handle(client *Node) {
     }
 }
 
-func (wn *WorkerNode) send(client *Node) {
+func (wn *WorkerNode) send() {
     for {
         select{
-        case message,ok :=<-client.ResData:
+        case message,ok :=<-wn.ResData:
             if !ok {
                 return
             }
-            wn.master.Socket.Write(message)
+            addr,_ := <-wn.ResAddr
+            conn,_ := net.DialUDP("udp",nil,addr)
+            conn.Write(message)
+            conn.Close()
         }
     }
 

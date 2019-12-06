@@ -75,11 +75,7 @@ func (client *Client) receive(worker *Node){
     message := make([]byte,BufSize)
     for {
         length,err :=worker.Socket.Read(message)
-        if err != nil{
-            //严格来讲，这里应该有更仔细的异常处理过程
-            log.Println("the worker die out!")
-            return
-        }
+        PrintIfErr(err)
         if length > 0 {
             worker.ReqData <- message
         }
@@ -101,22 +97,22 @@ func (client *Client) handle(worker *Node){
             switch calcResMessage.Type {
             case protos.CalculateTypes_INTEGER32:
                 int32ans := calcResMessage.GetInt32Ans()
-                println("int32")
+                log.Println("int32")
                 log.Printf("sum = %d, min = %d, mul = %d, div = %d\n", int32ans.AddInt32,
                     int32ans.MinInt32, int32ans.MulInt32, int32ans.DivInt32)
             case protos.CalculateTypes_INTEGER64:
                 int64ans := calcResMessage.GetInt64Ans()
-                println("int64")
+                log.Println("int64")
                 log.Printf("sum = %d, min = %d, mul = %d, div = %d\n", int64ans.AddInt64,
                     int64ans.MinInt64, int64ans.MulInt64, int64ans.DivInt64)
             case protos.CalculateTypes_FLOAT32:
                 float32ans := calcResMessage.GetFloat32Ans()
-                println("float32")
+                log.Println("float32")
                 log.Printf("sum = %f, min = %f, mul = %f, div = %f\n", float32ans.AddFloat32,
                     float32ans.MinFloat32, float32ans.MulFloat32, float32ans.DivFloat32)
             case protos.CalculateTypes_FLOAT64:
                 float64ans := calcResMessage.GetFloat64Ans()
-                println("float64")
+                log.Println("float64")
                 log.Printf("sum = %f, min = %f, mul = %f, div = %f\n", float64ans.AddFloat64,
                     float64ans.MinFloat64, float64ans.MulFloat64, float64ans.DivFloat64)
             }

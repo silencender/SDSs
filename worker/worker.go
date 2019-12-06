@@ -12,8 +12,13 @@ type Worker struct {
 }
 
 func NewWorker(addr string) *Worker {
-	worker := Worker{addr: addr}
-	return &worker
+	worker := &Worker{
+        addr: addr,
+        ReqData: make(chan []byte),
+        ResData: make(chan []byte),
+        ResAddr: make(chan *net.UDPAddr),
+    }
+	return worker
 }
 
 func (worker *Worker) StartWorker() {
@@ -30,7 +35,7 @@ func (worker *Worker) StartWorker() {
     //负责listen
     go worker_node.receive(worker.addr)
     //负责返还
-    //go worker_node.send()
+    go worker_node.send()
     //没有实现，还是没想懂run的必要性
     //go worker_node.run()
 }
