@@ -226,20 +226,6 @@ func (wn *WorkerNode) send(client *Node) {
 
 }
 
-func (wn *WorkerNode) listen(addr string) {
-    listener,err :=net.Listen("tcp",addr)
-    PrintIfErr(err)
-    for{
-        conn,err := listener.Accept()
-        PrintIfErr(err)
-        log.Println("listened a connect from ",conn.RemoteAddr)
-        client := NewNode(conn)
-        go wn.receive(client)
-        //go wn.handle(client)
-        //go wn.send(client)
-    }
-}
-
 func (wn *WorkerNode) run() {
 
 }
