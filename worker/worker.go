@@ -1,30 +1,29 @@
 package worker
 
 import (
-	. "github.com/silencender/SDSs/utils"
+    . "github.com/silencender/SDSs/utils"
+    "log"
+    "net"
 )
 
 type Worker struct {
-	port   int
-	master Node
+	addr string
 }
 
-func (worker *Worker) register() {
-
+func NewWorker(addr string) *Worker {
+	worker := Worker{addr: addr}
+	return &worker
 }
 
-func (worker *Worker) receive(client *Node) {
-
-}
-
-func (worker *Worker) send(client *Node) {
-
-}
-
-func (worker *Worker) run() {
-
-}
-
-func startWorker() {
-
+func (worker *Worker) StartWorker(addr1 string) {
+    log.Println("Worker running in ",addr1)
+    conn,err := net.Dial("tcp",MasterAddrToW)
+    PrintIfErr(err)
+    worker_node := &WorkerNode{
+        master : NewNode(conn),
+    }
+    worker_node.master.Open()
+    go worker_node.receive()
+    go worker_node.send()
+    go worker_node.run()
 }
