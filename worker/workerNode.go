@@ -216,8 +216,8 @@ func (wn *WorkerNode) send(client *Node) {
 
 }
 
-func (wn *WorkerNode) listen(port string) {
-    listener,err :=net.Listen("tcp","localhost:"+port)
+func (wn *WorkerNode) listen(addr string) {
+    listener,err :=net.Listen("tcp",addr)
     PrintIfErr(err)
     for{
         conn,err := listener.Accept()
