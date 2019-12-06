@@ -26,7 +26,8 @@ func (wm *WorkerManager) receive(worker *Node) {
 			break
 		}
 		if length > 0 {
-			worker.ReqData <- message
+            log.Println("hhh,I received it")
+            worker.ReqData <- message
 		}
 	}
 }
@@ -41,16 +42,18 @@ func (wm *WorkerManager) handle(worker *Node) {
 			message := &pb.Message{}
 			err := proto.Unmarshal(req, message)
 			PrintIfErr(err)
-			res := &pb.Message{
-				Seq: message.Seq,
-			}
+			//res := &pb.Message{
+			//	Seq: message.Seq,
+			//}
 			switch message.MsgType {
 			case pb.Message_REGISTER_REQ:
                 worker.UdpAddr = message.Socket
+		        worker.Open()
+                log.Println("hhh,now you need only registered")
                 wm.register <- worker
-                res.MsgType = pb.Message_REGISTER_RES
-            case pb.Message_HEARTBEAT_REQ:
-				res.MsgType = pb.Message_HEARTBEAT_RES
+                //res.MsgType = pb.Message_REGISTER_RES
+            //case pb.Message_HEARTBEAT_REQ:
+				//res.MsgType = pb.Message_HEARTBEAT_RES
 			}
 			//data, err := proto.Marshal(res)
 			PrintIfErr(err)
@@ -80,7 +83,6 @@ func (wm *WorkerManager) listen(addr string) {
 			log.Println(err.Error())
 		}
 		worker := NewNode(conn)
-		worker.Open()
         go wm.receive(worker)
 		go wm.handle(worker)
 		go wm.send(worker)
