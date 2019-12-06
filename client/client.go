@@ -2,7 +2,7 @@ package client
 
 import (
     . "SDSs/utils"
-	"github.com/silencender/SDSs/protos"
+	"SDSs/protos"
 	"github.com/golang/protobuf/proto"
     "log"
     "net"
