@@ -19,16 +19,14 @@ type WorkerManager struct {
 
 func (wm *WorkerManager) receive(worker *Node) {
 	message := make([]byte, BufSize)
-	for {
-        log.Println("hhh,I received it")
-		length, err := worker.Socket.Read(message)
-		if err != nil {
+    log.Println("hhh,I received it")
+	length, err := worker.Socket.Read(message)
+	if err != nil {
 			wm.unregister <- worker
-			break
-		}
-		if length > 0 {
+	        return
+    }
+	if length > 0 {
             worker.ReqData <- message
-		}
 	}
 }
 
