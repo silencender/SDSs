@@ -26,6 +26,7 @@ func (worker *Worker) StartWorker() {
     worker_node.master.Open()
     //之后注册完之后负责关闭连接
     worker_node.register(worker.addr)
+    log.Println("register done")
     //负责listen
     go worker_node.receive(worker.addr)
     //负责返还
