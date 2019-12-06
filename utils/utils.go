@@ -21,6 +21,7 @@ type Node struct {
 	Info    net.Addr
 	ReqData chan []byte
 	ResData chan []byte
+    UdpAddr string
 }
 
 func NewNode(conn net.Conn) *Node {
@@ -30,7 +31,8 @@ func NewNode(conn net.Conn) *Node {
 		Info:    conn.RemoteAddr(),
 		ReqData: make(chan []byte),
 		ResData: make(chan []byte),
-	}
+	    UdpAddr: "",
+    }
 }
 
 func (node *Node) Open() {

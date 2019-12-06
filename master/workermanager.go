@@ -46,8 +46,10 @@ func (wm *WorkerManager) handle(worker *Node) {
 			}
 			switch message.MsgType {
 			case pb.Message_REGISTER_REQ:
-				res.MsgType = pb.Message_REGISTER_RES
-			case pb.Message_HEARTBEAT_REQ:
+                worker.UdpAddr = message.Socket
+                wm.register <- worker
+                res.MsgType = pb.Message_REGISTER_RES
+            case pb.Message_HEARTBEAT_REQ:
 				res.MsgType = pb.Message_HEARTBEAT_RES
 			}
 			data, err := proto.Marshal(res)
@@ -78,7 +80,6 @@ func (wm *WorkerManager) listen(addr string) {
 			log.Println(err.Error())
 		}
 		worker := NewNode(conn)
-		wm.register <- worker
 		go wm.receive(worker)
 		go wm.handle(worker)
 		go wm.send(worker)

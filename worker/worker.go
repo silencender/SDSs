@@ -11,17 +11,15 @@ type Worker struct {
 	addr string
 }
 
-func NewWorker() *Worker {
-	worker := Worker{addr: ""}
+func NewWorker(addr string) *Worker {
+	worker := Worker{addr: addr}
 	return &worker
 }
 
 func (worker *Worker) StartWorker() {
     conn,err := net.Dial("tcp",MasterAddrToW)
-    worker.addr = conn.LocalAddr().String()
-    log.Println("Worker running in ",worker.addr)
-    port := strings.Split(worker.addr,":")[1]
     PrintIfErr(err)
+    log.Println("Worker running in ",worker.addr)
     worker_node := &WorkerNode{
         master : NewNode(conn),
     }

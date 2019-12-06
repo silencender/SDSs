@@ -15,6 +15,10 @@ type WorkerNode struct {
 }
 
 func (wn *WorkerNode) register(port string) {
+    //结束之后立即关闭	
+    //这样可能接受不到master的反馈，不知道会不会报错
+    defer wn.master.Socket.Close()
+    defer wn.master.Close()
 	log.Println("register to worker for port ",port)
     registReq := &pb.Message{
 		MsgType:pb.Message_REGISTER_REQ,
@@ -24,8 +28,7 @@ func (wn *WorkerNode) register(port string) {
     registReqData,err := proto.Marshal(registReq)
     PrintIfErr(err)
 	wn.master.Socket.Write([]byte(registReqData))
-	//事实上不用接到master的反馈也行，虽然定义了
-
+    //事实上不用接到master的反馈也行，虽然定义了
 }
 
 func (wn *WorkerNode) receive(client *Node) {
