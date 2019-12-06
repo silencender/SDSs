@@ -13,7 +13,7 @@ import (
 type WorkerManager struct {
 	workers    *list.List
 	pworker    *list.Element
-	register   chan *Node
+	register   chan string
 	unregister chan *Node
 }
 
@@ -39,7 +39,6 @@ func (wm *WorkerManager) handle(worker *Node) {
 			if !ok {
 				return
 			}
-			log.Println("hhhh,now i need to handle it")
             message := &pb.Message{}
 			err := proto.Unmarshal(req, message)
 			PrintIfErr(err)
@@ -48,12 +47,9 @@ func (wm *WorkerManager) handle(worker *Node) {
 			//}
 			switch message.MsgType {
 			case pb.Message_REGISTER_REQ:
-                worker.UdpAddr = message.Socket
-		        worker.Open()
-                log.Println("hhh,now you need only registered")
-                wm.register <- worker
+                wm.register <- worker.UdpAddr
                 //res.MsgType = pb.Message_REGISTER_RES
-            //case pb.Message_HEARTBEAT_REQ:
+                //case pb.Message_HEARTBEAT_REQ:
 				//res.MsgType = pb.Message_HEARTBEAT_RES
 			}
 			//data, err := proto.Marshal(res)
@@ -93,10 +89,9 @@ func (wm *WorkerManager) listen(addr string) {
 func (wm *WorkerManager) run() {
 	for {
 		select {
-		case conn := <-wm.register:
-			conn.Open()
-			wm.workers.PushBack(conn)
-			log.Printf("Worker %s registered\n", conn.Info.String())
+		case udpAddr := <-wm.register:
+			wm.workers.PushBack(udpAddr)
+			log.Printf("Worker %s registered\n", udpAddr)
 		case conn := <-wm.unregister:
 			conn.Close()
 			RemoveListItem(wm.workers, conn)
