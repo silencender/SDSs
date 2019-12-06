@@ -14,9 +14,6 @@ type Worker struct {
 func NewWorker(addr string) *Worker {
 	worker := &Worker{
         addr: addr,
-        ReqData: make(chan []byte),
-        ResData: make(chan []byte),
-        ResAddr: make(chan *net.UDPAddr),
     }
 	return worker
 }
@@ -27,6 +24,9 @@ func (worker *Worker) StartWorker() {
     log.Println("Worker running in ",worker.addr)
     worker_node := &WorkerNode{
         master : NewNode(conn),
+        ReqData: make(chan []byte),
+        ResData: make(chan []byte),
+        ResAddr: make(chan *net.UDPAddr),
     }
     worker_node.master.Open()
     //之后注册完之后负责关闭连接
