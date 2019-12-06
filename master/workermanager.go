@@ -39,7 +39,8 @@ func (wm *WorkerManager) handle(worker *Node) {
 			if !ok {
 				return
 			}
-			message := &pb.Message{}
+			log.Println("hhhh,now i need to handle it")
+            message := &pb.Message{}
 			err := proto.Unmarshal(req, message)
 			PrintIfErr(err)
 			//res := &pb.Message{
