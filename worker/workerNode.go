@@ -38,7 +38,8 @@ func (wn *WorkerNode) receive(addr string) {
     ip,port_str := ip_port[0],ip_port[1]
     port,_ := strconv.Atoi(port_str)
     log.Println(ip,port)
-    ServerConn,err := net.ListenUDP("udp", &net.UDPAddr{IP:[]byte(ip),Port:port,Zone:""})
+    //这里暂时没有实现ip的转换
+    ServerConn,err := net.ListenUDP("udp", &net.UDPAddr{IP:[]byte{127,0,0,1},Port:port,Zone:""})
     PrintIfErr(err)
     message := make([]byte,BufSize)
     for {
