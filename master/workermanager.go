@@ -100,20 +100,17 @@ func (wm *WorkerManager) run() {
 	}
 }
 
-func (wm *WorkerManager) SelectWorker() *Node {
+func (wm *WorkerManager) SelectWorker() string {
 	if wm.pworker == nil {
 		wm.pworker = wm.workers.Front()
 	}
-	var worker *Node
 	for {
 		if wm.pworker == wm.workers.Back() {
 			wm.pworker = wm.workers.Front()
 		} else {
 			wm.pworker = wm.pworker.Next()
 		}
-		worker = wm.pworker.Value.(*Node)
-		if worker.Ok {
-			return worker
-		}
+        worker := wm.pworker.Value.(string)
+		return worker
 	}
 }
