@@ -84,10 +84,7 @@ func (client *Client) receive(worker *Node){
 func (client *Client) handle(worker *Node){
     for {
         select {
-        case req,ok := <-worker.ReqData:
-            if !ok {
-                return
-            }
+        case req,_ := <-worker.ReqData:
             message := &protos.Message{}
             err := proto.Unmarshal(req,message)
             PrintIfErr(err)

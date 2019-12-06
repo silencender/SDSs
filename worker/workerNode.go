@@ -197,10 +197,10 @@ func construct_CALCULATE_RES(message *pb.Message) (*pb.Message){
     return res
 }
 
-func (wn *WorkerNode) handle(client *Node) {
+func (wn *WorkerNode) handle() {
     for {
         select{
-        case req,ok := <-client.ReqData:
+        case req,ok := <-wn.ReqData:
             if !ok {
                 return
             }
@@ -213,7 +213,7 @@ func (wn *WorkerNode) handle(client *Node) {
                 //把数据转换成字节流
                 data,err := proto.Marshal(res)
                 PrintIfErr(err)
-			    client.ResData <-data
+			    wn.ResData <-data
             }
         }
     }

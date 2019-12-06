@@ -36,6 +36,8 @@ func (worker *Worker) StartWorker() {
     go worker_node.receive(worker.addr)
     //负责返还
     go worker_node.send()
+    //负责处理
+    go worker_node.handle()
     //没有实现，还是没想懂run的必要性
     //go worker_node.run()
 }
