@@ -52,9 +52,9 @@ func (wm *WorkerManager) handle(worker *Node) {
             case pb.Message_HEARTBEAT_REQ:
 				res.MsgType = pb.Message_HEARTBEAT_RES
 			}
-			data, err := proto.Marshal(res)
+			//data, err := proto.Marshal(res)
 			PrintIfErr(err)
-			worker.ResData <- data
+			//worker.ResData <- data
 		}
 	}
 }
