@@ -52,10 +52,8 @@ func (client *Client) query() string {
 		Seq: int32(time.Now().Unix()),
     }
 	queryReqData,err := proto.Marshal(queryReq)
-	if err != nil {
-		log.Println(err)
-	}
-	client.Master.Socket.Write([]byte(queryReqData))
+    PrintIfErr(err)
+    client.Master.Socket.Write([]byte(queryReqData))
 	//接受回复
     data := make([]byte, 1024)
 	_ , err = client.Master.Socket.Read(data) //接收服务器的请求
@@ -215,9 +213,9 @@ func (client *Client) Run(calcType,calcOp1,calcOp2 string) {
     if !OK || !worker_node.Ok{
         client.Pool.unregister <- []byte(workerIP)
         //看似并行，实则顺序执行
-        worker_node = <- client.Pool.register
-        //go client.receive(worker_node)
-        //go client.handle(worker_node)
+        worker_node = <-client.Pool.register
+        go client.receive(worker_node)
+        go client.handle(worker_node)
     }
     client.QueryList <- []byte(calcString)
     client.WorkerList <- worker_node
