@@ -1,12 +1,12 @@
 package main
 
 import (
-    "github.com/silencender/SDSs/client"
-    "fmt"
+	"github.com/silencender/SDSs/client"
+    "log"
 )
 
 func main() {
-    fmt.Println("Hello,client")
+    log.Println("client running")
     client := client.StartClient()
     if client.Master.Socket == nil {
         return

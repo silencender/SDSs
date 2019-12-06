@@ -2,11 +2,10 @@ package main
 
 import (
 	"github.com/silencender/SDSs/master"
-	. "SDSs/utils"
+	. "github.com/silencender/SDSs/utils"
 )
 
 func main() {
 	master.StartMaster()
 	WaitForINT(func() {})
 }
-

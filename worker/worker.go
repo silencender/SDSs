@@ -7,23 +7,25 @@ import (
 )
 
 type Worker struct {
-	addr string
+	port string
 }
 
-func NewWorker(addr string) *Worker {
-	worker := Worker{addr: addr}
+func NewWorker(port string) *Worker {
+	worker := Worker{port: port}
 	return &worker
 }
 
-func (worker *Worker) StartWorker(addr1 string) {
-    log.Println("Worker running in ",addr1)
+func (worker *Worker) StartWorker() {
+    log.Println("Worker running in ",worker.port)
     conn,err := net.Dial("tcp",MasterAddrToW)
     PrintIfErr(err)
     worker_node := &WorkerNode{
         master : NewNode(conn),
     }
     worker_node.master.Open()
-    go worker_node.receive()
-    go worker_node.send()
-    go worker_node.run()
+    //之后注册完之后负责关闭连接
+    worker_node.register("18888")
+    //负责listen
+    //go worker_node.listen(worker.addr)
+    //go worker_node.run()
 }

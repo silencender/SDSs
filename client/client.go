@@ -127,7 +127,7 @@ func (client *Client) handle(worker *Node){
 //send 太复杂了，应该设计一下提高并行度
 func (client *Client) send() {
     for {
-        calcString := <- client.QueryList 
+        calcString := <- client.QueryList
         worker_node := <- client.WorkerList
         t := strings.Split(string(calcString),":")
         calcType,calcOp1,calcOp2 := t[0],t[1],t[2]
@@ -220,8 +220,8 @@ func (client *Client) Run(calcType,calcOp1,calcOp2 string) {
         client.Pool.unregister <- []byte(workerIP)
         //看似并行，实则顺序执行
         worker_node = <- client.Pool.register
-        go client.receive(worker_node)
-        go client.handle(worker_node)
+        //go client.receive(worker_node)
+        //go client.handle(worker_node)
     }
     client.QueryList <- []byte(calcString)
     client.WorkerList <- worker_node
@@ -234,7 +234,7 @@ func StartClient() Client {
 		log.Println("net.Dial err = ", err)
         //初始化空类client
         client := Client{}
-		return client 
+		return client
     }
     master_node := NewNode(conn)
     master_node.Open()
