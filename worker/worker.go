@@ -21,7 +21,6 @@ func NewWorker(addr string) *Worker {
 func (worker *Worker) StartWorker() {
     conn,err := net.Dial("tcp",MasterAddrToW)
     PrintIfErr(err)
-    log.Println("Worker running in ",worker.addr)
     worker_node := &WorkerNode{
         master : NewNode(conn),
     }
