@@ -43,7 +43,7 @@ func (cm *ClientManager) handle(client *Node) {
 			err := proto.Unmarshal(req, message)
 			PrintIfErr(err)
 			res := &pb.Message{
-				Seq: message.Seq(),
+				Seq: message.Seq,
 			}
 			switch message.MsgType {
 			case pb.Message_REGISTER_REQ:
