@@ -49,8 +49,8 @@ func (wm *WorkerManager) handle(worker *Node) {
 			switch message.MsgType {
 			case pb.Message_REGISTER_REQ:
 				res.MsgType = pb.Message_REGISTER_RES
+                log.Printf("we received : ",res.Socket)
                 worker.ListenAddr = res.Socket
-                log.Printf(worker.ListenAddr)
                 wm.register <- worker
 			case pb.Message_HEARTBEAT_REQ:
 				res.MsgType = pb.Message_HEARTBEAT_RES
