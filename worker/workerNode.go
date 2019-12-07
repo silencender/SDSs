@@ -12,17 +12,18 @@ import (
 type WorkerNode struct {
 	master *Node
 }
+func (wn *WorkerNode) listen() {
 
-func (wn *WorkerNode) register(addr string) {
+}
+func (wn *WorkerNode) register() {
     //结束之后立即关闭	
     //这样可能接受不到master的反馈，不知道会不会报错
     //defer wn.master.Socket.Close()
     //defer wn.master.Close()
-	log.Println("register to worker for addr ",addr)
+	log.Println("register to worker for addr ",wn.master.Info)
     registReq := &pb.Message{
 		MsgType:pb.Message_REGISTER_REQ,
 		Seq: int32(time.Now().Unix()),
-		Socket: addr,
 	}
     registReqData,err := proto.Marshal(registReq)
     PrintIfErr(err)

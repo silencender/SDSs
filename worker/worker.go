@@ -30,12 +30,12 @@ func (worker *Worker) StartWorker() {
     worker_node.register(worker.addr)
     log.Println("register done")
     //负责listen
+    go worker_node.listen()
     //go worker_node.receive(*Node)
     //负责返还
     //go worker_node.send(*Node)
     //负责处理
     //go worker_node.handle(*Node)
     //没有实现，还是没想懂run的必要性
-    //go worker_node.listen()
     //go worker_node.run()
 }
