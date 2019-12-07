@@ -200,7 +200,7 @@ func (client *Client) Close(){
 //calcOp1\calcOp2:对应的运算数
 func (client *Client) Run(calcType,calcOp1,calcOp2 string) {
     calcString := calcType + ":" + calcOp1 + ":" + calcOp2
-    workerIP := client.query()
+    workerIP := "127.0.0.1:"+client.query()
     log.Println("we've got a worker for :",workerIP)
     worker_node,OK := client.Pool.workers[workerIP]
     if !OK || !worker_node.Ok{
