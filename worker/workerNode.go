@@ -20,7 +20,7 @@ func (wn *WorkerNode) register() {
     //这样可能接受不到master的反馈，不知道会不会报错
     //defer wn.master.Socket.Close()
     //defer wn.master.Close()
-	log.Println("register to worker for addr ",wn.master.LocalAddr.String())
+	log.Println("register to worker for addr ",wn.master.Socket.LocalAddr().String())
     registReq := &pb.Message{
 		MsgType:pb.Message_REGISTER_REQ,
 		Seq: int32(time.Now().Unix()),
