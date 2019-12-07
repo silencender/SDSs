@@ -8,13 +8,14 @@ import (
     "time"
     "log"
     "net"
+    "strconv"
 )
 
 type WorkerNode struct {
 	master *Node
 }
 func (wn *WorkerNode) listen(port int) {
-    addr := "127.0.0.1:"+string(port)
+    addr := "127.0.0.1:"+strconv.Itoa(port)
     //addr := wn.master.Socket.LocalAddr().String()
 	listener, err := net.Listen("tcp", addr)
 	PrintIfErr(err)
@@ -35,7 +36,7 @@ func (wn *WorkerNode) register(port int) {
     registReq := &pb.Message{
 		MsgType:pb.Message_REGISTER_REQ,
 		Seq: int32(time.Now().Unix()),
-	    Socket: string(port),
+	    Socket: strconv.Itoa(port),
     }
 	log.Println("register to worker for port ", registReq.Socket)
     registReqData,err := proto.Marshal(registReq)
