@@ -14,16 +14,13 @@ import (
 
 type WorkerNode struct {
 	master *Node
-    ReqData chan []byte
-    ResData chan []byte
-    ResAddr chan *net.UDPAddr
 }
 
 func (wn *WorkerNode) register(addr string) {
     //结束之后立即关闭	
     //这样可能接受不到master的反馈，不知道会不会报错
-    defer wn.master.Socket.Close()
-    defer wn.master.Close()
+    //defer wn.master.Socket.Close()
+    //defer wn.master.Close()
 	log.Println("register to worker for addr ",addr)
     registReq := &pb.Message{
 		MsgType:pb.Message_REGISTER_REQ,
@@ -36,7 +33,8 @@ func (wn *WorkerNode) register(addr string) {
     //事实上不用接到master的反馈也行，虽然定义了
 }
 
-func (wn *WorkerNode) receive(addr string) {
+func (wn *WorkerNode) receive(client *Node) {
+    /******************
     ip_port := strings.Split(addr,":")
     ip,port_str := ip_port[0],ip_port[1]
     port,_ := strconv.Atoi(port_str)
@@ -50,10 +48,11 @@ func (wn *WorkerNode) receive(addr string) {
         PrintIfErr(err)
         if length >0 {
             log.Println("received ",length," bytes from ",addr)
-            wn.ReqData <- message
-            wn.ResAddr <- addr
+            client.ReqData <- message
+            client.ResAddr <- addr
         }
     }
+    **************/
 }
 
 //用于将输入的CALCULATE_REQ计算并返回CALCULATE_RES的值
@@ -197,10 +196,10 @@ func construct_CALCULATE_RES(message *pb.Message) (*pb.Message){
     return res
 }
 
-func (wn *WorkerNode) handle() {
+func (wn *WorkerNode) handle(client *Node) {
     for {
         select{
-        case req,ok := <-wn.ReqData:
+        case req,ok := <-client.ReqData:
             if !ok {
                 return
             }
@@ -213,23 +212,20 @@ func (wn *WorkerNode) handle() {
                 //把数据转换成字节流
                 data,err := proto.Marshal(res)
                 PrintIfErr(err)
-			    wn.ResData <-data
+			    client.ResData <-data
             }
         }
     }
 }
 
-func (wn *WorkerNode) send() {
+func (wn *WorkerNode) send(client *Node) {
     for {
         select{
-        case message,ok :=<-wn.ResData:
+        case message,ok :=<-client.ResData:
             if !ok {
                 return
             }
-            addr,_ := <-wn.ResAddr
-            conn,_ := net.DialUDP("udp",nil,addr)
-            conn.Write(message)
-            conn.Close()
+            client.Socket.Write(message)
         }
     }
 

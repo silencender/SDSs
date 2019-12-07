@@ -21,6 +21,7 @@ func (cm *ClientManager) receive(client *Node) {
 		length, err := client.Socket.Read(message)
 		if err != nil {
 			cm.unregister <- client
+			close(client.ReqData)
 			break
 		}
 		if length > 0 {
@@ -35,20 +36,21 @@ func (cm *ClientManager) handle(client *Node) {
 		select {
 		case req, ok := <-client.ReqData:
 			if !ok {
+				close(client.ResData)
 				return
 			}
 			message := &pb.Message{}
 			err := proto.Unmarshal(req, message)
 			PrintIfErr(err)
 			res := &pb.Message{
-				Seq: message.Seq,
+				Seq: message.Seq(),
 			}
 			switch message.MsgType {
 			case pb.Message_REGISTER_REQ:
 				res.MsgType = pb.Message_REGISTER_RES
 			case pb.Message_QUERY_REQ:
 				res.MsgType = pb.Message_QUERY_RES
-				res.Socket = cm.wm.SelectWorker()
+				res.Socket = cm.wm.SelectWorker().Info.String()
 			}
 			data, err := proto.Marshal(res)
 			PrintIfErr(err)

@@ -13,20 +13,22 @@ import (
 type WorkerManager struct {
 	workers    *list.List
 	pworker    *list.Element
-	register   chan string
+	register   chan *Node
 	unregister chan *Node
 }
 
 func (wm *WorkerManager) receive(worker *Node) {
 	message := make([]byte, BufSize)
-    log.Println("hhh,I received it")
-	length, err := worker.Socket.Read(message)
-	if err != nil {
+	for {
+		length, err := worker.Socket.Read(message)
+		if err != nil {
 			wm.unregister <- worker
-	        return
-    }
-	if length > 0 {
-            worker.ReqData <- message
+			close(worker.ReqData)
+			break
+		}
+		if length > 0 {
+			worker.ReqData <- message
+		}
 	}
 }
 
@@ -35,24 +37,24 @@ func (wm *WorkerManager) handle(worker *Node) {
 		select {
 		case req, ok := <-worker.ReqData:
 			if !ok {
+				close(worker.ResData)
 				return
 			}
-            message := &pb.Message{}
+			message := &pb.Message{}
 			err := proto.Unmarshal(req, message)
 			PrintIfErr(err)
-			//res := &pb.Message{
-			//	Seq: message.Seq,
-			//}
+			res := &pb.Message{
+				Seq: message.Seq(),
+			}
 			switch message.MsgType {
 			case pb.Message_REGISTER_REQ:
-                wm.register <- message.Socket
-                //res.MsgType = pb.Message_REGISTER_RES
-                //case pb.Message_HEARTBEAT_REQ:
-				//res.MsgType = pb.Message_HEARTBEAT_RES
+				res.MsgType = pb.Message_REGISTER_RES
+			case pb.Message_HEARTBEAT_REQ:
+				res.MsgType = pb.Message_HEARTBEAT_RES
 			}
-			//data, err := proto.Marshal(res)
+			data, err := proto.Marshal(res)
 			PrintIfErr(err)
-			//worker.ResData <- data
+			worker.ResData <- data
 		}
 	}
 }
@@ -74,12 +76,11 @@ func (wm *WorkerManager) listen(addr string) {
 	PrintIfErr(err)
 	for {
 		conn, err := listener.Accept()
-		if err != nil {
-			log.Println(err.Error())
-		}
+		PrintIfErr(err)
 		worker := NewNode(conn)
+		wm.register <- worker
+		go wm.receive(worker)
 		go wm.handle(worker)
-        go wm.receive(worker)
 		go wm.send(worker)
 	}
 }
@@ -87,9 +88,10 @@ func (wm *WorkerManager) listen(addr string) {
 func (wm *WorkerManager) run() {
 	for {
 		select {
-		case udpAddr := <-wm.register:
-			wm.workers.PushBack(udpAddr)
-			log.Printf("Worker %s registered\n", udpAddr)
+		case conn := <-wm.register:
+			conn.Open()
+			wm.workers.PushBack(conn)
+			log.Printf("Worker %s registered\n", conn.Info.String())
 		case conn := <-wm.unregister:
 			conn.Close()
 			RemoveListItem(wm.workers, conn)
@@ -98,18 +100,20 @@ func (wm *WorkerManager) run() {
 	}
 }
 
-func (wm *WorkerManager) SelectWorker() string {
+func (wm *WorkerManager) SelectWorker() *Node {
 	if wm.pworker == nil {
 		wm.pworker = wm.workers.Front()
 	}
+	var worker *Node
 	for {
 		if wm.pworker == wm.workers.Back() {
 			wm.pworker = wm.workers.Front()
 		} else {
 			wm.pworker = wm.pworker.Next()
 		}
-        worker := wm.pworker.Value.(string)
-        log.Println("I will give u worker: ",worker)
-        return worker
+		worker = wm.pworker.Value.(*Node)
+		if worker.Ok {
+			return worker
+		}
 	}
 }

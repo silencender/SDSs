@@ -31,12 +31,8 @@ func (client *Client) register() {
         //接受到一个需要注册的workerIP
         workerIP := string(<-client.Pool.unregister)
         //建立连接
-        conn, err := net.Dial("udp", workerIP)
-        //如果连接不上该怎么处理我还没有想好
-        if err != nil {
-            log.Println("net.Dial err = ", err,'\t',workerIP)
-            return
-        }
+        conn, err := net.Dial("tcp", workerIP)
+        PrintIfErr(err)
         worker_node := NewNode(conn)
         worker_node.Open()
         //添加到worker池
