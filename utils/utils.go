@@ -21,7 +21,7 @@ type Node struct {
 	Info    net.Addr
 	ReqData chan []byte
 	ResData chan []byte
-    ListenAddr []byte
+    ListenAddr string 
 }
 
 func NewNode(conn net.Conn) *Node {
