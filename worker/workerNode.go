@@ -7,13 +7,24 @@ import (
 
     "time"
     "log"
+    "net"
 )
 
 type WorkerNode struct {
 	master *Node
 }
 func (wn *WorkerNode) listen() {
-
+    addr := wn.master.Socket.LocalAddr().String()
+	listener, err := net.Listen("tcp", addr)
+	PrintIfErr(err)
+	for {
+		conn, err := listener.Accept()
+		PrintIfErr(err)
+		worker := NewNode(conn)
+		go wn.receive(worker)
+		go wn.handle(worker)
+		go wn.send(worker)
+	}
 }
 func (wn *WorkerNode) register() {
     //结束之后立即关闭	
@@ -32,25 +43,18 @@ func (wn *WorkerNode) register() {
 }
 
 func (wn *WorkerNode) receive(client *Node) {
-    /******************
-    ip_port := strings.Split(addr,":")
-    ip,port_str := ip_port[0],ip_port[1]
-    port,_ := strconv.Atoi(port_str)
-    log.Println(ip,port)
-    //这里暂时没有实现ip的转换
-    ServerConn,err := net.ListenUDP("udp", &net.UDPAddr{IP:[]byte{127,0,0,1},Port:port,Zone:""})
-    PrintIfErr(err)
     message := make([]byte,BufSize)
     for {
-        length,addr,err :=ServerConn.ReadFromUDP(message)
-        PrintIfErr(err)
+        length,err := client.Socket.Read(message)
+		if err != nil {
+			//wn.unregister <- worker
+            close(client.ReqData)
+			break
+		}
         if length >0 {
-            log.Println("received ",length," bytes from ",addr)
             client.ReqData <- message
-            client.ResAddr <- addr
         }
     }
-    **************/
 }
 
 //用于将输入的CALCULATE_REQ计算并返回CALCULATE_RES的值
