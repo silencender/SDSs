@@ -8,30 +8,26 @@ import (
 )
 
 type Worker struct {
-	port int
+	addr string
 }
 
-func NewWorker(addr int) *Worker {
+func NewWorker(addr string) *Worker {
 	worker := &Worker{
-        port: addr,
+        addr: addr,
     }
 	return worker
 }
 
 func (worker *Worker) StartWorker() {
-    local_addr := &net.TCPAddr{Port:worker.port}
-    worker_node := &WorkerNode{}
-    go worker_node.listen(worker.port)
-    d := net.Dialer{LocalAddr: local_addr}
-    conn,err := d.Dial("tcp",MasterAddrToW)
+    conn,err := net.Dial("tcp",MasterAddrToW)
     PrintIfErr(err)
-    worker_node.master = NewNode(conn)
-    //worker_node := &WorkerNode{
-    //    master : NewNode(conn),
-    //}
+    worker_node := &WorkerNode{
+        master : NewNode(conn),
+    }
     worker_node.master.Open()
     //之后注册完之后负责关闭连接
     worker_node.register()
     log.Println("register done")
     //负责listen
+    go worker_node.listen()
 }
