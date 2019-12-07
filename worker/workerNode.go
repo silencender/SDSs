@@ -13,9 +13,10 @@ import (
 type WorkerNode struct {
 	master *Node
 }
-func (wn *WorkerNode) listen() {
-    addr := wn.master.Socket.LocalAddr().String()
-	listener, err := net.Listen("tcp", addr)
+func (wn *WorkerNode) listen(port int) {
+    //addr := wn.master.Socket.LocalAddr().String()
+    addr := "localhost:"+string(port)
+    listener, err := net.Listen("tcp", addr)
 	PrintIfErr(err)
 	for {
 		conn, err := listener.Accept()
