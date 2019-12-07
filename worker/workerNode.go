@@ -13,8 +13,9 @@ import (
 type WorkerNode struct {
 	master *Node
 }
-func (wn *WorkerNode) listen() {
-    addr := wn.master.Socket.LocalAddr().String()
+func (wn *WorkerNode) listen(port int) {
+    addr := "localhost:"+string(port)
+    //addr := wn.master.Socket.LocalAddr().String()
 	listener, err := net.Listen("tcp", addr)
 	PrintIfErr(err)
 	for {
@@ -26,7 +27,7 @@ func (wn *WorkerNode) listen() {
 		go wn.send(worker)
 	}
 }
-func (wn *WorkerNode) register() {
+func (wn *WorkerNode) register(port int) {
     //结束之后立即关闭	
     //这样可能接受不到master的反馈，不知道会不会报错
     //defer wn.master.Socket.Close()
@@ -35,7 +36,8 @@ func (wn *WorkerNode) register() {
     registReq := &pb.Message{
 		MsgType:pb.Message_REGISTER_REQ,
 		Seq: int32(time.Now().Unix()),
-	}
+	    Socket: string(port),
+    }
     registReqData,err := proto.Marshal(registReq)
     PrintIfErr(err)
     wn.master.Socket.Write([]byte(registReqData))
