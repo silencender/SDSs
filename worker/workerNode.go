@@ -7,9 +7,6 @@ import (
 
     "time"
     "log"
-    "net"
-    "strings"
-    "strconv"
 )
 
 type WorkerNode struct {
