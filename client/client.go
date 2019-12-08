@@ -3,6 +3,7 @@ package client
 import (
     . "github.com/silencender/SDSs/utils"
     "log"
+    "net"
 )
 
 type Client struct{
@@ -12,7 +13,7 @@ type Client struct{
 
 func NewClient(seq int) (*Client){
     log.Println("start worker ",seq)
-    client := &CLient{
+    client := &Client{
         seq : seq,
         repeatTime : 100,
     }
@@ -22,6 +23,7 @@ func NewClient(seq int) (*Client){
 
 func (client *Client)StartClient(){
     conn, err := net.Dial("tcp", MasterAddrToC)
+    PrintIfErr(err)
     master_node := NewNode(conn)
     master_node.Open()
     cn := &ClientNode{
