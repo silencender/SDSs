@@ -55,7 +55,6 @@ func (wn *WorkerNode) receive(client *Node) {
 	for {
 		length, err := client.Socket.Read(message)
 		if err != nil {
-			log.Println(err)
 			wn.unregister <- client
 			close(client.ReqData)
 			break
@@ -236,7 +235,10 @@ func (wn *WorkerNode) handle(client *Node) {
 func (wn *WorkerNode) send(client *Node) {
 	for {
 		select {
-		case message, _ := <-client.ResData:
+		case message, ok := <-client.ResData:
+			if !ok {
+				return
+			}
 			client.Socket.Write(message)
 			log.Println("ok i sended to ", client.Info.String())
 		}
