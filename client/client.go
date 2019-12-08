@@ -36,7 +36,6 @@ func (client *Client)StartClient(){
 			unregister: make(chan []byte),
 		},
 	}
-    //返回client结构体
     go cn.generate(client.repeatTime)
     //go cn.query(client.repeatTime)
     //receive 和send如果不在进程池中才建立
