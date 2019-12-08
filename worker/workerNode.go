@@ -26,11 +26,11 @@ func (wn *WorkerNode) listen(port int) {
 		conn, err := listener.Accept()
 		PrintIfErr(err)
 		log.Println("received a connection from ", conn.RemoteAddr().String())
-		worker := NewNode(conn)
-		wn.registered <- worker
-		go wn.receive(worker)
-		go wn.handle(worker)
-		go wn.send(worker)
+		client := NewNode(conn)
+		wn.registered <- client
+		go wn.receive(client)
+		go wn.handle(client)
+		go wn.send(client)
 	}
 }
 func (wn *WorkerNode) register(port int) {
