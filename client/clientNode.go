@@ -4,6 +4,7 @@ import (
 	"log"
 	"math/rand"
 	"net"
+
 	//"time"
 	"github.com/golang/protobuf/proto"
 	pb "github.com/silencender/SDSs/protos"
@@ -11,7 +12,7 @@ import (
 )
 
 type WorkerPool struct {
-	workers    map[string]*Node
+	workers map[string]*Node
 }
 
 type ClientNode struct {
@@ -28,7 +29,7 @@ func (client *ClientNode) query(repeatTime int) {
 	for i := 0; i < repeatTime; i++ {
 		queryReq := &pb.Message{
 			MsgType: pb.Message_QUERY_REQ,
-			Seq:     int32(i+1),
+			Seq:     int32(i + 1),
 		}
 		queryReqData, err := proto.Marshal(queryReq)
 		PrintIfErr(err)
@@ -77,7 +78,7 @@ func (client *ClientNode) handle(worker *Node) {
 					PrintIfErr(err)
 					worker_node = NewNode(conn)
 					client.register <- worker_node
-                    //添加到进程池
+					//添加到进程池
 					client.Pool.workers[workerIP] = worker_node
 					log.Println("connected")
 					go client.receive(worker_node)
@@ -124,18 +125,19 @@ func (cn *ClientNode) send(worker *Node) {
 		}
 	}
 }
-func (cn *ClientNode) registerManager(){
+func (cn *ClientNode) registerManager() {
 	for {
 		select {
 		case conn := <-cn.register:
 			conn.Open()
-			log.Printf("Client %s registered\n", conn.Info.String())
+			log.Printf("Worker %s registered\n", conn.Info.String())
 		case conn := <-cn.unregister:
 			conn.Close()
-			log.Printf("Client %s unregistered\n", conn.Info.String())
+			log.Printf("Worker %s unregistered\n", conn.Info.String())
 		}
 	}
 }
+
 //负责send报文
 func (client *ClientNode) run(repeatTime int) {
 	var calctypes string = "fild"
@@ -146,7 +148,7 @@ func (client *ClientNode) run(repeatTime int) {
 		//构造calcReq包
 		calcReq := &pb.Message{
 			MsgType: pb.Message_CALCULATE_REQ,
-			Seq:     int32(i+1),
+			Seq:     int32(i + 1),
 			Calcreq: &pb.CalcReq{},
 		}
 		//根据输入参数构造包字段
