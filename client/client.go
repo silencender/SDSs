@@ -26,7 +26,7 @@ func (client *Client)StartClient(){
     master_node := NewNode(conn)
     master_node.Open()
     cn := &ClientNode{
-		Master : *master_node,
+		Master : master_node,
 		WorkerList: make(chan *Node),
         QueryList: make(chan []byte),
         Pool: WorkerPool{
@@ -36,6 +36,11 @@ func (client *Client)StartClient(){
 		},
 	}
     go cn.generate(client.repeatTime)
-    //go cn.query(client.repeatTime)
+    go cn.run(client.repeatTime)
+    go cn.query(client.repeatTime)
+    //建立与主进程通信的receive和send
+    go cn.receive(cn.Master)
+    go cn.handle(cn.Master)
+    go cn.send(cn.Master)
     //receive 和send如果不在进程池中才建立
 }
