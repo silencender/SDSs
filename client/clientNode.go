@@ -28,10 +28,6 @@ type ClientNode struct {
 }
 
 
-        //返还node
-        client.Pool.register <- worker_node
-    }
-}
 func (client *ClientNode) query(repeatTime int){
 	//query数据
     for i:=0;i<repeatTime;i++ {
@@ -43,32 +39,17 @@ func (client *ClientNode) query(repeatTime int){
         PrintIfErr(err)
         client.Master.ResData <-queryReqData
     }
-    client.Master.Socket.Write([]byte(queryReqData))
-	//接受回复
-    data := make([]byte, 1024)
-	_ , err = client.Master.Socket.Read(data) //接收服务器的请求
-	if err != nil {
-		log.Println(err)
-	}
-	message := &pb.Message{}
-	err = proto.Unmarshal(data,message)
-	if err != nil {
-		log.Println(err)
-	}
-    return workerIP
 }
 
 func (client *ClientNode) receive(worker *Node){
     message := make([]byte,BufSize)
     for {
-        select
-        length,err :=worker.Socket.Read(message)
-        PrintIfErr(err)
-        if length > 0 {
-            worker.ReqData <- message
-        }
-
-    }
+            length,err :=worker.Socket.Read(message)
+            PrintIfErr(err)
+            if length > 0 {
+                worker.ReqData <- message
+            }
+}
 }
 
 func (client *ClientNode) handle(worker *Node){
@@ -96,7 +77,7 @@ func (client *ClientNode) handle(worker *Node){
                     go client.send(worker_node)
                 }
                 client.WorkerList <- worker_node
-            case pb.CALCULATE_RES:
+            case pb.Message_CALCULATE_RES:
                 calcResMessage := message.GetCalcres()
                 switch calcResMessage.Type {
                 case pb.CalculateTypes_INTEGER32:
@@ -207,7 +188,7 @@ func (client *ClientNode) run(repeatTime int) {
         //把包打成字节流
         calcReqData,err := proto.Marshal(calcReq)
         PrintIfErr(err)
-        worker.ResData <- calcReqData
+        worker_node.ResData <- calcReqData
     }
 }
 
