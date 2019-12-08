@@ -98,6 +98,7 @@ func (wm *WorkerManager) run() {
 		case conn := <-wm.register:
 			conn.Open()
 			wm.workers.PushBack(conn)
+			wm.pworker = wm.workers.Back()
 			log.Printf("Worker %s registered\n", conn.ListenAddr)
 		case conn := <-wm.unregister:
 			conn.Close()
