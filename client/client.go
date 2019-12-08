@@ -17,7 +17,6 @@ func NewClient(seq int) (*Client){
         seq : seq,
         repeatTime : 100,
     }
-    client.StartClient()
     return client
 }
 
