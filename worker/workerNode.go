@@ -46,12 +46,15 @@ func (wn *WorkerNode) register(port int) {
 	log.Println("register to worker for port ", registReq.Socket)
 	registReqData, err := proto.Marshal(registReq)
 	PrintIfErr(err)
-	wn.master.Socket.Write([]byte(registReqData))
+	payload := NewPayload()
+	payload.Load(registReqData)
+	wn.master.Socket.Write(payload.Encode())
 	//事实上不用接到master的反馈也行，虽然定义了
 }
 
 func (wn *WorkerNode) receive(client *Node) {
 	message := make([]byte, BufSize)
+	parser := NewPayloadParser()
 	for {
 		length, err := client.Socket.Read(message)
 		if err != nil {
@@ -60,17 +63,20 @@ func (wn *WorkerNode) receive(client *Node) {
 			break
 		}
 		if length > 0 {
-			client.ReqData <- message[:length]
+			log.Println("Received length: ", length)
+			payloads := parser.Parse(message[:length])
+			for i := range payloads {
+				log.Println("Handle length: ", len(payloads[i].Decode()))
+				client.ReqData <- payloads[i].Decode()
+			}
 		}
 	}
 }
 
 //用于将输入的CALCULATE_REQ计算并返回CALCULATE_RES的值
-func construct_CALCULATE_RES(message *pb.Message) *pb.Message {
-	Calcreq := message.GetCalcreq()
+func construct_CALCULATE_RES(Calcreq *pb.CalcReq, seq int32) *pb.Message {
 	//构造一个返回包
 	res := &pb.Message{}
-	seq := message.Seq
 	res.Seq = seq
 	res.MsgType = pb.Message_CALCULATE_RES
 	CalresMessage := &pb.CalcRes{
@@ -220,9 +226,10 @@ func (wn *WorkerNode) handle(client *Node) {
 			err := proto.Unmarshal(req, message)
 			PrintIfErr(err)
 			log.Println("wow look what i've received ", message.MsgType)
+			calcreq := message.GetCalcreq()
 			switch message.MsgType {
 			case pb.Message_CALCULATE_REQ:
-				res := construct_CALCULATE_RES(message)
+				res := construct_CALCULATE_RES(calcreq, message.Seq)
 				//把数据转换成字节流
 				data, err := proto.Marshal(res)
 				PrintIfErr(err)
@@ -233,13 +240,15 @@ func (wn *WorkerNode) handle(client *Node) {
 }
 
 func (wn *WorkerNode) send(client *Node) {
+	payload := NewPayload()
 	for {
 		select {
 		case message, ok := <-client.ResData:
 			if !ok {
 				return
 			}
-			client.Socket.Write(message)
+			payload.Load(message)
+			client.Socket.Write(payload.Encode())
 			log.Println("ok i sended to ", client.Info.String())
 		}
 	}

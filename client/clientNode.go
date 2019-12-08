@@ -4,6 +4,7 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"strconv"
 
 	//"time"
 	"github.com/golang/protobuf/proto"
@@ -41,6 +42,7 @@ func (client *ClientNode) query(repeatTime int) {
 
 func (client *ClientNode) receive(worker *Node) {
 	message := make([]byte, BufSize)
+	parser := NewPayloadParser()
 	for {
 		length, err := worker.Socket.Read(message)
 		if err != nil {
@@ -50,7 +52,12 @@ func (client *ClientNode) receive(worker *Node) {
 			break
 		}
 		if length > 0 {
-			worker.ReqData <- message[:length]
+			log.Println("Received length: ", length)
+			payloads := parser.Parse(message[:length])
+			for i := range payloads {
+				log.Println("Handle length: ", len(payloads[i].Decode()))
+				worker.ReqData <- payloads[i].Decode()
+			}
 		}
 	}
 }
@@ -65,6 +72,7 @@ func (client *ClientNode) handle(worker *Node) {
 			}
 			message := &pb.Message{}
 			err := proto.Unmarshal(req, message)
+			log.Println("Data length: ", strconv.Itoa(len(req)))
 			PrintIfErr(err)
 			switch message.MsgType {
 			case pb.Message_QUERY_RES:
@@ -77,6 +85,7 @@ func (client *ClientNode) handle(worker *Node) {
 					conn, err := net.Dial("tcp", workerIP)
 					PrintIfErr(err)
 					worker_node = NewNode(conn)
+					worker_node.Open()
 					client.register <- worker_node
 					//添加到进程池
 					client.Pool.workers[workerIP] = worker_node
@@ -115,13 +124,15 @@ func (client *ClientNode) handle(worker *Node) {
 	}
 }
 func (cn *ClientNode) send(worker *Node) {
+	payload := NewPayload()
 	for {
 		select {
 		case message, ok := <-worker.ResData:
 			if !ok {
 				return
 			}
-			worker.Socket.Write(message)
+			payload.Load(message)
+			worker.Socket.Write(payload.Encode())
 		}
 	}
 }
@@ -139,54 +150,59 @@ func (cn *ClientNode) registerManager() {
 }
 
 //负责send报文
-func (client *ClientNode) run(repeatTime int) {
+func (client *ClientNode) run() {
 	var calctypes string = "fild"
-	for i := 0; i < repeatTime; i++ {
-		worker_node := <-client.WorkerList
-		log.Println("worker", worker_node.Info)
-		calcType := string(calctypes[rand.Intn(len(calctypes))])
-		//构造calcReq包
-		calcReq := &pb.Message{
-			MsgType: pb.Message_CALCULATE_REQ,
-			Seq:     int32(i + 1),
-			Calcreq: &pb.CalcReq{},
+	for {
+		select {
+		case worker_node, ok := <-client.WorkerList:
+			if !ok {
+				return
+			}
+			log.Println("worker", worker_node.Info)
+			calcType := string(calctypes[rand.Intn(len(calctypes))])
+			//构造calcReq包
+			calcReq := &pb.Message{
+				MsgType: pb.Message_CALCULATE_REQ,
+				Seq:     1,
+				Calcreq: &pb.CalcReq{},
+			}
+			//根据输入参数构造包字段
+			switch calcType {
+			case "i":
+				var op1, op2 int32
+				op1 = rand.Int31n(10000)
+				op2 = rand.Int31n(10000)
+				calcReq.Calcreq.Int32Op1 = int32(op1)
+				calcReq.Calcreq.Int32Op2 = int32(op2)
+				calcReq.Calcreq.Type = pb.CalculateTypes_INTEGER32
+			case "l":
+				var op1, op2 int64
+				op1 = rand.Int63n(10000)
+				op2 = rand.Int63n(10000)
+				calcReq.Calcreq.Int64Op1 = int64(op1)
+				calcReq.Calcreq.Int64Op2 = int64(op2)
+				calcReq.Calcreq.Type = pb.CalculateTypes_INTEGER64
+			case "f":
+				var op1, op2 float32
+				op1 = rand.Float32() * 10000
+				op2 = rand.Float32() * 10000
+				calcReq.Calcreq.Float32Op1 = float32(op1)
+				calcReq.Calcreq.Float32Op2 = float32(op2)
+				calcReq.Calcreq.Type = pb.CalculateTypes_FLOAT32
+			case "d":
+				var op1, op2 float64
+				op1 = rand.Float64() * 10000
+				op1 = rand.Float64() * 10000
+				calcReq.Calcreq.Float64Op1 = op1
+				calcReq.Calcreq.Float64Op2 = op2
+				calcReq.Calcreq.Type = pb.CalculateTypes_FLOAT64
+			}
+			//把包打成字节流
+			calcReqData, err := proto.Marshal(calcReq)
+			PrintIfErr(err)
+			log.Println("I will send ", calcReq.Calcreq.Type)
+			worker_node.ResData <- calcReqData
 		}
-		//根据输入参数构造包字段
-		switch calcType {
-		case "i":
-			var op1, op2 int32
-			op1 = rand.Int31n(10000)
-			op2 = rand.Int31n(10000)
-			calcReq.Calcreq.Int32Op1 = int32(op1)
-			calcReq.Calcreq.Int32Op2 = int32(op2)
-			calcReq.Calcreq.Type = pb.CalculateTypes_INTEGER32
-		case "l":
-			var op1, op2 int64
-			op1 = rand.Int63n(10000)
-			op2 = rand.Int63n(10000)
-			calcReq.Calcreq.Int64Op1 = int64(op1)
-			calcReq.Calcreq.Int64Op2 = int64(op2)
-			calcReq.Calcreq.Type = pb.CalculateTypes_INTEGER64
-		case "f":
-			var op1, op2 float32
-			op1 = rand.Float32() * 10000
-			op2 = rand.Float32() * 10000
-			calcReq.Calcreq.Float32Op1 = float32(op1)
-			calcReq.Calcreq.Float32Op2 = float32(op2)
-			calcReq.Calcreq.Type = pb.CalculateTypes_FLOAT32
-		case "d":
-			var op1, op2 float64
-			op1 = rand.Float64() * 10000
-			op1 = rand.Float64() * 10000
-			calcReq.Calcreq.Float64Op1 = op1
-			calcReq.Calcreq.Float64Op2 = op2
-			calcReq.Calcreq.Type = pb.CalculateTypes_FLOAT64
-		}
-		//把包打成字节流
-		calcReqData, err := proto.Marshal(calcReq)
-		PrintIfErr(err)
-		log.Println("I will send ", calcReq.Calcreq.Type)
-		worker_node.ResData <- calcReqData
 	}
 }
 

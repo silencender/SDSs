@@ -19,6 +19,7 @@ type WorkerManager struct {
 
 func (wm *WorkerManager) receive(worker *Node) {
 	message := make([]byte, BufSize)
+	parser := NewPayloadParser()
 	for {
 		length, err := worker.Socket.Read(message)
 		if err != nil {
@@ -27,7 +28,10 @@ func (wm *WorkerManager) receive(worker *Node) {
 			break
 		}
 		if length > 0 {
-            worker.ReqData <- message[:length]
+			payloads := parser.Parse(message[:length])
+			for i := range payloads {
+				worker.ReqData <- payloads[i].Decode()
+			}
 		}
 	}
 }
@@ -49,8 +53,8 @@ func (wm *WorkerManager) handle(worker *Node) {
 			switch message.MsgType {
 			case pb.Message_REGISTER_REQ:
 				res.MsgType = pb.Message_REGISTER_RES
-                worker.ListenAddr = message.Socket
-                wm.register <- worker
+				worker.ListenAddr = message.Socket
+				wm.register <- worker
 			case pb.Message_HEARTBEAT_REQ:
 				res.MsgType = pb.Message_HEARTBEAT_RES
 			}
@@ -62,13 +66,15 @@ func (wm *WorkerManager) handle(worker *Node) {
 }
 
 func (wm *WorkerManager) send(worker *Node) {
+	payload := NewPayload()
 	for {
 		select {
 		case message, ok := <-worker.ResData:
 			if !ok {
 				return
 			}
-			worker.Socket.Write(message)
+			payload.Load(message)
+			worker.Socket.Write(payload.Encode())
 		}
 	}
 }
@@ -80,7 +86,7 @@ func (wm *WorkerManager) listen(addr string) {
 		conn, err := listener.Accept()
 		PrintIfErr(err)
 		worker := NewNode(conn)
-        go wm.receive(worker)
+		go wm.receive(worker)
 		go wm.handle(worker)
 		go wm.send(worker)
 	}

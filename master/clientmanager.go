@@ -3,6 +3,7 @@ package master
 import (
 	"log"
 	"net"
+	"strconv"
 
 	"github.com/golang/protobuf/proto"
 	pb "github.com/silencender/SDSs/protos"
@@ -17,15 +18,21 @@ type ClientManager struct {
 
 func (cm *ClientManager) receive(client *Node) {
 	message := make([]byte, BufSize)
+	parser := NewPayloadParser()
 	for {
 		length, err := client.Socket.Read(message)
+		log.Println("Something received: ", strconv.Itoa(length))
 		if err != nil {
 			cm.unregister <- client
 			close(client.ReqData)
 			break
 		}
 		if length > 0 {
-            client.ReqData <- message[:length]
+			payloads := parser.Parse(message[:length])
+			for i := range payloads {
+				client.ReqData <- payloads[i].Decode()
+				log.Println("I have told client to find whom")
+			}
 		}
 	}
 
@@ -60,13 +67,15 @@ func (cm *ClientManager) handle(client *Node) {
 }
 
 func (cm *ClientManager) send(client *Node) {
+	payload := NewPayload()
 	for {
 		select {
 		case message, ok := <-client.ResData:
 			if !ok {
 				return
 			}
-			client.Socket.Write(message)
+			payload.Load(message)
+			client.Socket.Write(payload.Encode())
 		}
 	}
 }
