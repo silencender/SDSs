@@ -70,7 +70,9 @@ func (p *Payload) Encode() []byte {
 }
 
 func (p *Payload) Decode() []byte {
-	return p.data
+	data := make([]byte, len(p.data))
+	copy(data, p.data)
+	return data
 }
 
 type PayloadParser struct {
