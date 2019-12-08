@@ -35,7 +35,6 @@ func (client *Client)StartClient(){
 			unregister: make(chan []byte),
 		},
 	}
-    go cn.generate(client.repeatTime)
     go cn.run(client.repeatTime)
     go cn.query(client.repeatTime)
     //建立与主进程通信的receive和send

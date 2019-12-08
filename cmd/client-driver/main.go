@@ -11,7 +11,7 @@ func main() {
     f,_ := os.OpenFile("client_result", os.O_RDWR | os.O_CREATE, 0666)
     log.SetOutput(f)
     log.Println("client running")
-    c := client.NewClient(1,2)
+    c := client.NewClient(1,3)
     c.StartClient()
     WaitForINT(func() {})
 }

@@ -7,10 +7,7 @@ import (
     "log"
     "net"
     "time"
-    "strings"
-    "strconv"
     "math/rand"
-    "fmt"
 )
 
 type WorkerPool struct {
@@ -118,13 +115,11 @@ func (cn *ClientNode) send(worker *Node) {
 }
 //负责send报文
 func (client *ClientNode) run(repeatTime int) {
+    var calctypes string = "fild"
     for i:=0;i<repeatTime;i++{
-        calcString := <-client.QueryList
         worker_node := <-client.WorkerList
         log.Println("worker",worker_node.Info)
-        t := strings.Split(string(calcString),":")
-        calcType,calcOp1,calcOp2 := t[0],t[1],t[2]
-        log.Println("Calculate type ",calcType,calcOp1,calcOp2)
+        calcType := string(calctypes[rand.Intn(len(calctypes))])
         //构造calcReq包
 	    calcReq := &pb.Message{
 		    MsgType:pb.Message_CALCULATE_REQ,
@@ -134,54 +129,30 @@ func (client *ClientNode) run(repeatTime int) {
         //根据输入参数构造包字段
         switch calcType{
         case "i":
-            var op1,op2 int
-            op1, err := strconv.Atoi(calcOp1)
-            if err != nil {
-                log.Println(err)
-            }
-            op2, err = strconv.Atoi(calcOp2)
-            if err != nil {
-                log.Println(err)
-            }
+            var op1,op2 int32
+            op1 = rand.Int31n(10000)
+            op2 = rand.Int31n(10000)
             calcReq.Calcreq.Int32Op1 = int32(op1)
             calcReq.Calcreq.Int32Op2 = int32(op2)
             calcReq.Calcreq.Type = pb.CalculateTypes_INTEGER32
         case "l":
             var op1,op2 int64
-            op1, err := strconv.ParseInt(calcOp1,10,64)
-            if err != nil {
-                log.Println(err)
-            }
-            op2, err = strconv.ParseInt(calcOp2,10,64)
-            if err != nil {
-                log.Println(err)
-            }
+            op1 = rand.Int63n(10000)
+            op2 = rand.Int63n(10000)
             calcReq.Calcreq.Int64Op1 = int64(op1)
             calcReq.Calcreq.Int64Op2 = int64(op2)
             calcReq.Calcreq.Type = pb.CalculateTypes_INTEGER64
         case "f":
-            var op1,op2 float64
-            op1, err := strconv.ParseFloat(calcOp1, 32)
-            if err != nil {
-                log.Println(err)
-            }
-            op2, err = strconv.ParseFloat(calcOp2, 32)
-            if err != nil {
-                log.Println(err)
-            }
+            var op1,op2 float32
+            op1 = rand.Float32()*10000
+            op2 = rand.Float32()*10000
             calcReq.Calcreq.Float32Op1 = float32(op1)
             calcReq.Calcreq.Float32Op2 = float32(op2)
             calcReq.Calcreq.Type = pb.CalculateTypes_FLOAT32
         case "d":
             var op1,op2 float64
-            op1, err := strconv.ParseFloat(calcOp1, 64)
-            if err != nil {
-                log.Println(err)
-            }
-            op2, err = strconv.ParseFloat(calcOp2, 64)
-            if err != nil {
-                log.Println(err)
-            }
+            op1 = rand.Float64()*10000
+            op1 = rand.Float64()*10000
             calcReq.Calcreq.Float64Op1 = op1
             calcReq.Calcreq.Float64Op2 = op2
             calcReq.Calcreq.Type = pb.CalculateTypes_FLOAT64
@@ -189,6 +160,7 @@ func (client *ClientNode) run(repeatTime int) {
         //把包打成字节流
         calcReqData,err := proto.Marshal(calcReq)
         PrintIfErr(err)
+        log.Println("I will send ",calcReq.Calcreq.Type)
         worker_node.ResData <- calcReqData
     }
 }
@@ -197,28 +169,4 @@ func (client *ClientNode) Close(){
     //做完之后关闭
     client.Master.Socket.Close()
     client.Master.Ok = false
-}
-func (client *ClientNode) generate(repeatTime int) {
-    var calctypes string = "fild"
-    var calctype,calcOp1,calcOp2 string
-    for i:=0; i<repeatTime; i++{
-        calctype = string(calctypes[rand.Intn(len(calctypes))])
-        switch calctype{
-        //生成non-negative不知道符不符合要求
-        case "i":
-            calcOp1 = strconv.FormatInt(int64(rand.Int31()),10)
-            calcOp2 = strconv.FormatInt(int64(rand.Int31()),10)
-        case "l":
-            calcOp1 = strconv.FormatInt(rand.Int63(),10)
-            calcOp2 = strconv.FormatInt(rand.Int63(),10)
-        case "f":
-            calcOp1 = fmt.Sprintf("%f",rand.Float32())
-            calcOp2 = fmt.Sprintf("%f",rand.Float32())
-        case "d":
-            calcOp1 = fmt.Sprintf("%f",rand.Float64())
-            calcOp2 = fmt.Sprintf("%f",rand.Float64())
-        }
-        calcString := calctype + ":" + calcOp1 + ":" + calcOp2
-        client.QueryList <- []byte(calcString)
-    }
 }
