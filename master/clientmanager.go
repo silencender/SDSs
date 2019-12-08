@@ -25,7 +25,7 @@ func (cm *ClientManager) receive(client *Node) {
 			break
 		}
 		if length > 0 {
-			client.ReqData <- message
+            client.ReqData <- message[:length]
 		}
 	}
 

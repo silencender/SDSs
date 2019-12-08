@@ -27,7 +27,7 @@ func (wm *WorkerManager) receive(worker *Node) {
 			break
 		}
 		if length > 0 {
-			worker.ReqData <- message
+            worker.ReqData <- message[:length]
 		}
 	}
 }

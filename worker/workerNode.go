@@ -22,7 +22,8 @@ func (wn *WorkerNode) listen(port int) {
 	for {
 		conn, err := listener.Accept()
 		PrintIfErr(err)
-		worker := NewNode(conn)
+		log.Println("received a connection from ",conn.RemoteAddr().String())
+        worker := NewNode(conn)
 		go wn.receive(worker)
 		go wn.handle(worker)
 		go wn.send(worker)
@@ -55,7 +56,7 @@ func (wn *WorkerNode) receive(client *Node) {
 			break
 		}
         if length >0 {
-            client.ReqData <- message
+            client.ReqData <- message[:length]
         }
     }
 }
@@ -71,6 +72,7 @@ func construct_CALCULATE_RES(message *pb.Message) (*pb.Message){
 	CalresMessage := &pb.CalcRes{
 		Status:pb.CalcRes_OK,
 	}
+    log.Println("we will calculate ",Calcreq)
     //根据输入计算结果
     switch Calcreq.Type {
     case pb.CalculateTypes_INTEGER32:
@@ -196,7 +198,7 @@ func construct_CALCULATE_RES(message *pb.Message) (*pb.Message){
         CalresMessage.Float64Ans = float64ans
         CalresMessage.Type = pb.CalculateTypes_FLOAT64
     }
-
+    log.Println("finished calculating ",CalresMessage)
     res.Calcres = CalresMessage
     return res
 }
@@ -211,6 +213,7 @@ func (wn *WorkerNode) handle(client *Node) {
             message := &pb.Message{}
             err := proto.Unmarshal(req,message)
             PrintIfErr(err)
+            log.Println("wow look what i've received ",message.MsgType)
             switch message.MsgType {
             case pb.Message_CALCULATE_REQ:
                 res := construct_CALCULATE_RES(message)
@@ -226,11 +229,9 @@ func (wn *WorkerNode) handle(client *Node) {
 func (wn *WorkerNode) send(client *Node) {
     for {
         select{
-        case message,ok :=<-client.ResData:
-            if !ok {
-                return
-            }
+        case message,_ :=<-client.ResData:
             client.Socket.Write(message)
+            log.Println("ok i sended to ",client.Info.String())
         }
     }
 

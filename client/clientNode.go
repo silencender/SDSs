@@ -6,7 +6,6 @@ import (
 	"github.com/golang/protobuf/proto"
     "log"
     "net"
-    
     "time"
     "strings"
     "strconv"
@@ -37,6 +36,8 @@ func (client *ClientNode) query(repeatTime int){
         }
 	    queryReqData,err := proto.Marshal(queryReq)
         PrintIfErr(err)
+        //reqdata丢给handle来处理
+        //resdata丢给send来处理
         client.Master.ResData <-queryReqData
     }
 }
@@ -47,7 +48,7 @@ func (client *ClientNode) receive(worker *Node){
             length,err :=worker.Socket.Read(message)
             PrintIfErr(err)
             if length > 0 {
-                worker.ReqData <- message
+                worker.ReqData <- message[:length]
             }
 }
 }
@@ -60,18 +61,20 @@ func (client *ClientNode) handle(worker *Node){
             err := proto.Unmarshal(req,message)
             PrintIfErr(err)
             switch message.MsgType{
-            case pb.Message_REGISTER_RES:
+            case pb.Message_QUERY_RES:
                 workerIP := message.Socket
                 workerIP = "127.0.0.1:"+workerIP
-                log.Println("we've got a worker for :",workerIP)
                 worker_node,OK := client.Pool.workers[workerIP]
                 //如果找不到则建立并打开连接
                 if !OK || !worker_node.Ok{
+                    log.Println("connecting to ",workerIP)
                     conn, err := net.Dial("tcp", workerIP)
                     PrintIfErr(err)
-                    worker_node := NewNode(conn)
+                    worker_node = NewNode(conn)
                     worker_node.Open()
-                    worker_node = <-client.Pool.register
+                    //添加到进程池
+                    client.Pool.workers[workerIP] = worker_node
+                    log.Println("connected")
                     go client.receive(worker_node)
                     go client.handle(worker_node)
                     go client.send(worker_node)
@@ -108,11 +111,8 @@ func (client *ClientNode) handle(worker *Node){
 func (cn *ClientNode) send(worker *Node) {
 	for {
 		select {
-		case message, ok := <-worker.ResData:
-			if !ok {
-				return
-			}
-			worker.Socket.Write(message)
+		case message, _ := <-worker.ResData:
+            worker.Socket.Write(message)
 		}
 	}
 }
@@ -121,9 +121,10 @@ func (client *ClientNode) run(repeatTime int) {
     for i:=0;i<repeatTime;i++{
         calcString := <-client.QueryList
         worker_node := <-client.WorkerList
+        log.Println("worker",worker_node.Info)
         t := strings.Split(string(calcString),":")
         calcType,calcOp1,calcOp2 := t[0],t[1],t[2]
-        log.Println(calcType,calcOp1,calcOp2)
+        log.Println("Calculate type ",calcType,calcOp1,calcOp2)
         //构造calcReq包
 	    calcReq := &pb.Message{
 		    MsgType:pb.Message_CALCULATE_REQ,
@@ -200,7 +201,6 @@ func (client *ClientNode) Close(){
 func (client *ClientNode) generate(repeatTime int) {
     var calctypes string = "fild"
     var calctype,calcOp1,calcOp2 string
-    log.Println("hi, I am there")
     for i:=0; i<repeatTime; i++{
         calctype = string(calctypes[rand.Intn(len(calctypes))])
         switch calctype{
@@ -218,7 +218,6 @@ func (client *ClientNode) generate(repeatTime int) {
             calcOp1 = fmt.Sprintf("%f",rand.Float64())
             calcOp2 = fmt.Sprintf("%f",rand.Float64())
         }
-        log.Println("generated\t",calctype,'\t',calcOp1,'\t',calcOp2)
         calcString := calctype + ":" + calcOp1 + ":" + calcOp2
         client.QueryList <- []byte(calcString)
     }

@@ -11,11 +11,11 @@ type Client struct{
     seq int
 }
 
-func NewClient(seq int) (*Client){
+func NewClient(seq,repeats int) (*Client){
     log.Println("start worker ",seq)
     client := &Client{
         seq : seq,
-        repeatTime : 100,
+        repeatTime : repeats,
     }
     return client
 }
