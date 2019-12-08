@@ -217,26 +217,25 @@ func (client *ClientNode) run(calcType,calcOp1,calcOp2 string) {
 }
 func (client *ClientNode) generate(repeatTime int) {
     var calctypes string = "fild"
-    var calctype byte
-    var calcOp1,calcOp2 string
+    var calctype,calcOp1,calcOp2 string
     log.Println("hi, I am there")
     for i:=0; i<repeatTime; i++{
-        calctype = calctypes[rand.Intn(len(calctypes))]
+        calctype = string(calctypes[rand.Intn(len(calctypes))])
         switch calctype{
         //生成non-negative不知道符不符合要求
-        case 'i':
+        case "i":
             calcOp1 = strconv.FormatInt(int64(rand.Int31()),10)
             calcOp2 = strconv.FormatInt(int64(rand.Int31()),10)
-        case 'l':
+        case "l":
             calcOp1 = strconv.FormatInt(rand.Int63(),10)
             calcOp2 = strconv.FormatInt(rand.Int63(),10)
-        case 'f':
+        case "f":
             calcOp1 = fmt.Sprintf("%f",rand.Float32())
             calcOp2 = fmt.Sprintf("%f",rand.Float32())
-        case 'd':
+        case "d":
             calcOp1 = fmt.Sprintf("%f",rand.Float64())
             calcOp2 = fmt.Sprintf("%f",rand.Float64())
         }
-        log.Println("generated\t%s\t%s\t%s",calctype,calcOp1,calcOp2)
+        log.Println("generated\t%v\t%v\t%v",calctype,calcOp1,calcOp2)
     }
 }
