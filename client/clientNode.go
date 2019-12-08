@@ -219,6 +219,7 @@ func (client *ClientNode) generate(repeatTime int) {
     var calctypes string = "fild"
     var calctype byte
     var calcOp1,calcOp2 string
+    log.Println("hi, I am there")
     for i:=0; i<repeatTime; i++{
         calctype = calctypes[rand.Intn(len(calctypes))]
         switch calctype{
