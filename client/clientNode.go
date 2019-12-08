@@ -4,7 +4,6 @@ import (
 	"log"
 	"math/rand"
 	"net"
-	"strconv"
 
 	//"time"
 	"github.com/golang/protobuf/proto"
@@ -52,10 +51,8 @@ func (client *ClientNode) receive(worker *Node) {
 			break
 		}
 		if length > 0 {
-			log.Println("Received length: ", length)
 			payloads := parser.Parse(message[:length])
 			for i := range payloads {
-				log.Println("Handle length: ", len(payloads[i].Decode()))
 				worker.ReqData <- payloads[i].Decode()
 			}
 		}
@@ -72,7 +69,6 @@ func (client *ClientNode) handle(worker *Node) {
 			}
 			message := &pb.Message{}
 			err := proto.Unmarshal(req, message)
-			log.Println("Data length: ", strconv.Itoa(len(req)))
 			PrintIfErr(err)
 			switch message.MsgType {
 			case pb.Message_QUERY_RES:

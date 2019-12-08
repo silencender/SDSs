@@ -63,10 +63,8 @@ func (wn *WorkerNode) receive(client *Node) {
 			break
 		}
 		if length > 0 {
-			log.Println("Received length: ", length)
 			payloads := parser.Parse(message[:length])
 			for i := range payloads {
-				log.Println("Handle length: ", len(payloads[i].Decode()))
 				client.ReqData <- payloads[i].Decode()
 			}
 		}
