@@ -31,9 +31,9 @@ func (client *Client)StartClient(){
         QueryList: make(chan []byte),
         Pool: WorkerPool{
 			workers:    make(map[string]*Node),
-			register:   make(chan *Node),
-			unregister: make(chan []byte),
 		},
+		register:   make(chan *Node),
+		unregister: make(chan *Node),
 	}
     go cn.run(client.repeatTime)
     go cn.query(client.repeatTime)
@@ -41,5 +41,6 @@ func (client *Client)StartClient(){
     go cn.receive(cn.Master)
     go cn.handle(cn.Master)
     go cn.send(cn.Master)
+    go cn.registerManager()
     //receive 和send如果不在进程池中才建立
 }

@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"net"
 	"time"
-
 	"github.com/golang/protobuf/proto"
 	pb "github.com/silencender/SDSs/protos"
 	. "github.com/silencender/SDSs/utils"
@@ -13,8 +12,6 @@ import (
 
 type WorkerPool struct {
 	workers    map[string]*Node
-	register   chan *Node
-	unregister chan []byte
 }
 
 type ClientNode struct {
@@ -22,6 +19,8 @@ type ClientNode struct {
 	Pool       WorkerPool
 	QueryList  chan []byte
 	WorkerList chan *Node
+	register   chan *Node
+	unregister chan *Node 
 }
 
 func (client *ClientNode) query(repeatTime int) {
@@ -44,6 +43,8 @@ func (client *ClientNode) receive(worker *Node) {
 	for {
 		length, err := worker.Socket.Read(message)
 		if err != nil {
+			log.Println(err)
+			client.unregister <- worker
 			close(worker.ReqData)
 			break
 		}
@@ -75,8 +76,8 @@ func (client *ClientNode) handle(worker *Node) {
 					conn, err := net.Dial("tcp", workerIP)
 					PrintIfErr(err)
 					worker_node = NewNode(conn)
-					worker_node.Open()
-					//添加到进程池
+					client.register <- worker_node
+                    //添加到进程池
 					client.Pool.workers[workerIP] = worker_node
 					log.Println("connected")
 					go client.receive(worker_node)
@@ -123,7 +124,18 @@ func (cn *ClientNode) send(worker *Node) {
 		}
 	}
 }
-
+func (cn *ClientNode) registerManager(){
+	for {
+		select {
+		case conn := <-cn.register:
+			conn.Open()
+			log.Printf("Client %s registered\n", conn.Info.String())
+		case conn := <-cn.unregister:
+			conn.Close()
+			log.Printf("Client %s unregistered\n", conn.Info.String())
+		}
+	}
+}
 //负责send报文
 func (client *ClientNode) run(repeatTime int) {
 	var calctypes string = "fild"

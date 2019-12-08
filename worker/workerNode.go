@@ -13,6 +13,8 @@ import (
 
 type WorkerNode struct {
 	master *Node
+    registered chan *Node
+    unregister chan *Node
 }
 
 func (wn *WorkerNode) listen(port int) {
@@ -22,10 +24,11 @@ func (wn *WorkerNode) listen(port int) {
 	PrintIfErr(err)
 	for {
 		conn, err := listener.Accept()
-		PrintIfErr(err)
+        PrintIfErr(err)
 		log.Println("received a connection from ", conn.RemoteAddr().String())
 		worker := NewNode(conn)
-		go wn.receive(worker)
+		wn.registered <- worker
+        go wn.receive(worker)
 		go wn.handle(worker)
 		go wn.send(worker)
 	}
@@ -53,7 +56,7 @@ func (wn *WorkerNode) receive(client *Node) {
 		length, err := client.Socket.Read(message)
 		if err != nil {
 			log.Println(err)
-			//wn.unregister <- worker
+			wn.unregister <- client
 			close(client.ReqData)
 			break
 		}
@@ -69,7 +72,7 @@ func construct_CALCULATE_RES(message *pb.Message) *pb.Message {
 	//构造一个返回包
 	res := &pb.Message{}
 	seq := message.Seq
-	res.Seq = seq
+    res.Seq = seq
 	res.MsgType = pb.Message_CALCULATE_RES
 	CalresMessage := &pb.CalcRes{
 		Status: pb.CalcRes_OK,
@@ -213,6 +216,7 @@ func (wn *WorkerNode) handle(client *Node) {
 				return
 			}
 			message := &pb.Message{}
+	        log.Println("ok, u got message")
 			err := proto.Unmarshal(req, message)
 			PrintIfErr(err)
 			log.Println("wow look what i've received ", message.MsgType)
@@ -240,5 +244,14 @@ func (wn *WorkerNode) send(client *Node) {
 }
 
 func (wn *WorkerNode) run() {
-
+	for {
+		select {
+		case conn := <-wn.registered:
+			conn.Open()
+			log.Printf("Client %s registered\n", conn.Info.String())
+		case conn := <-wn.unregister:
+			conn.Close()
+			log.Printf("Client %s unregistered\n", conn.Info.String())
+		}
+	}
 }
