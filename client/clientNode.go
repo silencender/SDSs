@@ -4,7 +4,7 @@ import (
 	"log"
 	"math/rand"
 	"net"
-	"time"
+	//"time"
 	"github.com/golang/protobuf/proto"
 	pb "github.com/silencender/SDSs/protos"
 	. "github.com/silencender/SDSs/utils"
@@ -20,7 +20,7 @@ type ClientNode struct {
 	QueryList  chan []byte
 	WorkerList chan *Node
 	register   chan *Node
-	unregister chan *Node 
+	unregister chan *Node
 }
 
 func (client *ClientNode) query(repeatTime int) {
@@ -28,7 +28,7 @@ func (client *ClientNode) query(repeatTime int) {
 	for i := 0; i < repeatTime; i++ {
 		queryReq := &pb.Message{
 			MsgType: pb.Message_QUERY_REQ,
-			Seq:     int32(time.Now().Unix()),
+			Seq:     int32(i+1),
 		}
 		queryReqData, err := proto.Marshal(queryReq)
 		PrintIfErr(err)
@@ -146,7 +146,7 @@ func (client *ClientNode) run(repeatTime int) {
 		//构造calcReq包
 		calcReq := &pb.Message{
 			MsgType: pb.Message_CALCULATE_REQ,
-			Seq:     int32(time.Now().Unix()),
+			Seq:     int32(i+1),
 			Calcreq: &pb.CalcReq{},
 		}
 		//根据输入参数构造包字段
