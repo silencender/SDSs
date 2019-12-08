@@ -9,7 +9,8 @@ import (
     "time"
     "strings"
     "strconv"
-    "rand"
+    "math/rand"
+    "fmt"
 )
 
 type WorkerPool struct {
@@ -215,28 +216,25 @@ func (client *ClientNode) run(calcType,calcOp1,calcOp2 string) {
     client.WorkerList <- worker_node
 }
 func (client *ClientNode) generate(repeatTime int) {
-    var calctypes = []rune("fild")
-    var calctype,calcOp1,calcOp2 string
+    var calctypes string = "fild"
+    var calctype byte
+    var calcOp1,calcOp2 string
     for i:=0; i<repeatTime; i++{
         calctype = calctypes[rand.Intn(len(calctypes))]
         switch calctype{
         //生成non-negative不知道符不符合要求
         case 'i':
-            calcOp1 = strconv.Itoa(rand.Int31())
-            calcOp2 = strconv.Itoa(rand.Int31())
+            calcOp1 = strconv.FormatInt(int64(rand.Int31()),10)
+            calcOp2 = strconv.FormatInt(int64(rand.Int31()),10)
         case 'l':
-            calcOp1 = strconv.Itoa(rand.Int63())
-            calcOp2 = strconv.Itoa(rand.Int63())
+            calcOp1 = strconv.FormatInt(rand.Int63(),10)
+            calcOp2 = strconv.FormatInt(rand.Int63(),10)
         case 'f':
-            calcOp1,err := strconv.ParseFloat(rand.Float32(),32)
-            PrintIfErr(err)
-            calcOp2,err = strconv.ParseFloat(rand.Float32(),32)
-            PrintIfErr(err)
+            calcOp1 = fmt.Sprintf("%f",rand.Float32())
+            calcOp2 = fmt.Sprintf("%f",rand.Float32())
         case 'd':
-            calcOp1,err := strconv.ParseFloat(rand.Float64(),64)
-            PrintIfErr(err)
-            calcOp2,err = strconv.ParseFloat(rand.Float64(),64)
-            PrintIfErr(err)
+            calcOp1 = fmt.Sprintf("%f",rand.Float64())
+            calcOp2 = fmt.Sprintf("%f",rand.Float64())
         }
         log.Println("generated\t%s\t%s\t%s",calctype,calcOp1,calcOp2)
     }
