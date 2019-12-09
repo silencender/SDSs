@@ -7,7 +7,6 @@ import (
 
 	"log"
 	"net"
-	"strconv"
 	"time"
 )
 
@@ -17,23 +16,21 @@ type WorkerNode struct {
 	unregister chan *Node
 }
 
-func (wn *WorkerNode) listen(port int) {
-	addr := "127.0.0.1:" + strconv.Itoa(port)
-	//addr := wn.master.Socket.LocalAddr().String()
+func (wn *WorkerNode) listen(addr string) {
 	listener, err := net.Listen("tcp", addr)
 	PrintIfErr(err)
 	for {
 		conn, err := listener.Accept()
 		PrintIfErr(err)
-		log.Println("received a connection from ", conn.RemoteAddr().String())
 		client := NewNode(conn)
+		log.Println("Connected by ", client.Info.String())
 		wn.registered <- client
 		go wn.receive(client)
 		go wn.handle(client)
 		go wn.send(client)
 	}
 }
-func (wn *WorkerNode) register(port int) {
+func (wn *WorkerNode) register(addr string) {
 	//结束之后立即关闭
 	//这样可能接受不到master的反馈，不知道会不会报错
 	//defer wn.master.Socket.Close()
@@ -41,9 +38,9 @@ func (wn *WorkerNode) register(port int) {
 	registReq := &pb.Message{
 		MsgType: pb.Message_REGISTER_REQ,
 		Seq:     int32(time.Now().Unix()),
-		Socket:  strconv.Itoa(port),
+		Socket:  addr,
 	}
-	log.Println("register to worker for port ", registReq.Socket)
+	log.Println("Registered as ", addr)
 	registReqData, err := proto.Marshal(registReq)
 	PrintIfErr(err)
 	payload := NewPayload()
@@ -80,7 +77,7 @@ func construct_CALCULATE_RES(Calcreq *pb.CalcReq, seq int32) *pb.Message {
 	CalresMessage := &pb.CalcRes{
 		Status: pb.CalcRes_OK,
 	}
-	log.Println("we will calculate ", Calcreq)
+	log.Println("Received: ", Calcreq)
 	//根据输入计算结果
 	switch Calcreq.Type {
 	case pb.CalculateTypes_INTEGER32:
@@ -206,7 +203,7 @@ func construct_CALCULATE_RES(Calcreq *pb.CalcReq, seq int32) *pb.Message {
 		CalresMessage.Float64Ans = float64ans
 		CalresMessage.Type = pb.CalculateTypes_FLOAT64
 	}
-	log.Println("finished calculating ", CalresMessage)
+	log.Println("Response: ", CalresMessage)
 	res.Calcres = CalresMessage
 	return res
 }
@@ -220,10 +217,8 @@ func (wn *WorkerNode) handle(client *Node) {
 				return
 			}
 			message := &pb.Message{}
-			log.Println("ok, u got message")
 			err := proto.Unmarshal(req, message)
 			PrintIfErr(err)
-			log.Println("wow look what i've received ", message.MsgType)
 			calcreq := message.GetCalcreq()
 			switch message.MsgType {
 			case pb.Message_CALCULATE_REQ:
@@ -247,7 +242,6 @@ func (wn *WorkerNode) send(client *Node) {
 			}
 			payload.Load(message)
 			client.Socket.Write(payload.Encode())
-			log.Println("ok i sended to ", client.Info.String())
 		}
 	}
 

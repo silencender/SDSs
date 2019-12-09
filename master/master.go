@@ -7,7 +7,19 @@ import (
 	. "github.com/silencender/SDSs/utils"
 )
 
-func StartMaster() {
+type Master struct {
+	clientListenAddr string
+	workerListenAddr string
+}
+
+func NewMaster(cla, wla string) *Master {
+	return &Master{
+		clientListenAddr: cla,
+		workerListenAddr: wla,
+	}
+}
+
+func (master *Master) StartMaster() {
 	log.Println("Master running")
 	wm := WorkerManager{
 		workers:    list.New(),
@@ -21,7 +33,7 @@ func StartMaster() {
 		unregister: make(chan *Node),
 	}
 	go cm.run()
-	go cm.listen(MasterAddrToC)
+	go cm.listen(master.clientListenAddr)
 	go wm.run()
-	go wm.listen(MasterAddrToW)
+	go wm.listen(master.workerListenAddr)
 }

@@ -26,10 +26,11 @@ type ClientNode struct {
 
 func (client *ClientNode) query(repeatTime int) {
 	//query数据
+	seq := NewSeqGen()
 	for i := 0; i < repeatTime; i++ {
 		queryReq := &pb.Message{
 			MsgType: pb.Message_QUERY_REQ,
-			Seq:     int32(i + 1),
+			Seq:     seq.GetSeq(),
 		}
 		queryReqData, err := proto.Marshal(queryReq)
 		PrintIfErr(err)
@@ -73,11 +74,10 @@ func (client *ClientNode) handle(worker *Node) {
 			switch message.MsgType {
 			case pb.Message_QUERY_RES:
 				workerIP := message.Socket
-				workerIP = "127.0.0.1:" + workerIP
 				worker_node, OK := client.Pool.workers[workerIP]
 				//如果找不到则建立并打开连接
 				if !OK || !worker_node.Ok {
-					log.Println("connecting to ", workerIP)
+					log.Println("Connecting to Worker ", workerIP)
 					conn, err := net.Dial("tcp", workerIP)
 					PrintIfErr(err)
 					worker_node = NewNode(conn)
@@ -85,7 +85,6 @@ func (client *ClientNode) handle(worker *Node) {
 					client.register <- worker_node
 					//添加到进程池
 					client.Pool.workers[workerIP] = worker_node
-					log.Println("connected")
 					go client.receive(worker_node)
 					go client.handle(worker_node)
 					go client.send(worker_node)
@@ -93,27 +92,24 @@ func (client *ClientNode) handle(worker *Node) {
 				client.WorkerList <- worker_node
 			case pb.Message_CALCULATE_RES:
 				calcResMessage := message.GetCalcres()
+				seq := message.Seq
 				switch calcResMessage.Type {
 				case pb.CalculateTypes_INTEGER32:
 					int32ans := calcResMessage.GetInt32Ans()
-					log.Println("int32")
-					log.Printf("sum = %d, min = %d, mul = %d, div = %d\n", int32ans.AddInt32,
-						int32ans.MinInt32, int32ans.MulInt32, int32ans.DivInt32)
+					log.Printf("Received Seq#%d: type = int32, sum = %d, min = %d, mul = %d, div = %d\n",
+						seq, int32ans.AddInt32, int32ans.MinInt32, int32ans.MulInt32, int32ans.DivInt32)
 				case pb.CalculateTypes_INTEGER64:
 					int64ans := calcResMessage.GetInt64Ans()
-					log.Println("int64")
-					log.Printf("sum = %d, min = %d, mul = %d, div = %d\n", int64ans.AddInt64,
-						int64ans.MinInt64, int64ans.MulInt64, int64ans.DivInt64)
+					log.Printf("Received Seq#%d: type = int64, sum = %d, min = %d, mul = %d, div = %d\n",
+						seq, int64ans.AddInt64, int64ans.MinInt64, int64ans.MulInt64, int64ans.DivInt64)
 				case pb.CalculateTypes_FLOAT32:
 					float32ans := calcResMessage.GetFloat32Ans()
-					log.Println("float32")
-					log.Printf("sum = %f, min = %f, mul = %f, div = %f\n", float32ans.AddFloat32,
-						float32ans.MinFloat32, float32ans.MulFloat32, float32ans.DivFloat32)
+					log.Printf("Received Seq#%d: type = float32, sum = %f, min = %f, mul = %f, div = %f\n",
+						seq, float32ans.AddFloat32, float32ans.MinFloat32, float32ans.MulFloat32, float32ans.DivFloat32)
 				case pb.CalculateTypes_FLOAT64:
 					float64ans := calcResMessage.GetFloat64Ans()
-					log.Println("float64")
-					log.Printf("sum = %f, min = %f, mul = %f, div = %f\n", float64ans.AddFloat64,
-						float64ans.MinFloat64, float64ans.MulFloat64, float64ans.DivFloat64)
+					log.Printf("Received Seq#%d: type = float64, sum = %f, min = %f, mul = %f, div = %f\n",
+						seq, float64ans.AddFloat64, float64ans.MinFloat64, float64ans.MulFloat64, float64ans.DivFloat64)
 				}
 			}
 		}
@@ -137,6 +133,7 @@ func (cn *ClientNode) send(worker *Node) {
 //负责send报文
 func (client *ClientNode) run() {
 	var calctypes string = "fild"
+	seq := NewSeqGen()
 	for {
 		select {
 		case worker_node, ok := <-client.WorkerList:
@@ -146,12 +143,12 @@ func (client *ClientNode) run() {
 			if !worker_node.Ok {
 				continue
 			}
-			log.Println("worker", worker_node.Info)
+			log.Println("Assigned Worker ", worker_node.Info)
 			calcType := string(calctypes[rand.Intn(len(calctypes))])
 			//构造calcReq包
 			calcReq := &pb.Message{
 				MsgType: pb.Message_CALCULATE_REQ,
-				Seq:     1,
+				Seq:     seq.GetSeq(),
 				Calcreq: &pb.CalcReq{},
 			}
 			//根据输入参数构造包字段
@@ -188,15 +185,15 @@ func (client *ClientNode) run() {
 			//把包打成字节流
 			calcReqData, err := proto.Marshal(calcReq)
 			PrintIfErr(err)
-			log.Println("I will send ", calcReq.Calcreq.Type)
+			log.Println("Send ", calcReq)
 			worker_node.ResData <- calcReqData
 		case conn := <-client.register:
 			conn.Open()
-			log.Printf("Worker %s registered\n", conn.Info.String())
+			log.Printf("Node %s registered\n", conn.Info.String())
 		case conn := <-client.unregister:
 			conn.Close()
 			close(conn.ResData)
-			log.Printf("Worker %s unregistered\n", conn.Info.String())
+			log.Printf("Node %s unregistered\n", conn.Info.String())
 		}
 	}
 }

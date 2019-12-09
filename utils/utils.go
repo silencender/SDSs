@@ -10,10 +10,12 @@ import (
 )
 
 const (
-	MasterAddrToC = "localhost:12345"
-	MasterAddrToW = "localhost:12346"
-	BufSize       = 1024
-	MaxQ          = 256
+	BufSize = 1024
+	MaxQ    = 256
+)
+
+const (
+	MaxInt32 = int32(^uint32(0) >> 1)
 )
 
 type Node struct {
@@ -128,8 +130,23 @@ func (pp *PayloadParser) Parse(data []byte) []*Payload {
 		pp.idx = idx
 	}
 	pp.length -= pp.idx
-	//log.Println("data length, num, idx, length, remain l: ", len(data), num, pp.idx, pp.length, l)
+
 	return pp.payloads[:num]
+}
+
+type SeqGen struct {
+	seq int32
+}
+
+func NewSeqGen() *SeqGen {
+	return &SeqGen{-1}
+}
+
+func (s *SeqGen) GetSeq() int32 {
+	s.seq += 1
+	s.seq %= MaxInt32
+
+	return s.seq
 }
 
 func prependByte(x []byte, y byte) []byte {

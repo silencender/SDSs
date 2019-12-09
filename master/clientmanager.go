@@ -55,6 +55,7 @@ func (cm *ClientManager) handle(client *Node) {
 			case pb.Message_QUERY_REQ:
 				res.MsgType = pb.Message_QUERY_RES
 				res.Socket = cm.wm.SelectWorker().ListenAddr
+				log.Printf("Worker %v is assigned to Client %v", res.Socket, client.Info.String())
 			}
 			data, err := proto.Marshal(res)
 			PrintIfErr(err)

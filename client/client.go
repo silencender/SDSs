@@ -10,19 +10,21 @@ import (
 type Client struct {
 	repeatTime int
 	seq        int
+	masterAddr string
 }
 
-func NewClient(seq, repeats int) *Client {
+func NewClient(seq, repeats int, ma string) *Client {
 	log.Println("start worker ", seq)
 	client := &Client{
 		seq:        seq,
 		repeatTime: repeats,
+		masterAddr: ma,
 	}
 	return client
 }
 
 func (client *Client) StartClient() {
-	conn, err := net.Dial("tcp", MasterAddrToC)
+	conn, err := net.Dial("tcp", client.masterAddr)
 	PrintIfErr(err)
 	master_node := NewNode(conn)
 	master_node.Open()
