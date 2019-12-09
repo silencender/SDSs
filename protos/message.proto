@@ -89,5 +89,3 @@ message Message{
 }
 
 //client向worker发送计算请求
-
-

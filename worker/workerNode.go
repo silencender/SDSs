@@ -244,7 +244,6 @@ func (wn *WorkerNode) send(client *Node) {
 			client.Socket.Write(payload.Encode())
 		}
 	}
-
 }
 
 func (wn *WorkerNode) run() {
