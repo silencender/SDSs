@@ -7,3 +7,4 @@ all:
 
 clean:
 	rm bin/*
+	rm *_result

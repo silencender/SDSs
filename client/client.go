@@ -42,6 +42,5 @@ func (client *Client) StartClient() {
 	go cn.receive(cn.Master)
 	go cn.handle(cn.Master)
 	go cn.send(cn.Master)
-	go cn.registerManager()
 	//receive 和send如果不在进程池中才建立
 }

@@ -13,7 +13,7 @@ const (
 	MasterAddrToC = "localhost:12345"
 	MasterAddrToW = "localhost:12346"
 	BufSize       = 1024
-	MaxQ          = 16
+	MaxQ          = 256
 )
 
 type Node struct {
@@ -78,13 +78,15 @@ func (p *Payload) Decode() []byte {
 type PayloadParser struct {
 	payloads []*Payload
 	data     []byte
+	idx      int
 	length   int
 }
 
 func NewPayloadParser() *PayloadParser {
 	pp := &PayloadParser{
 		payloads: make([]*Payload, MaxQ),
-		data:     make([]byte, BufSize),
+		data:     make([]byte, BufSize*2),
+		idx:      0,
 		length:   0,
 	}
 	for i := range pp.payloads {
@@ -95,16 +97,23 @@ func NewPayloadParser() *PayloadParser {
 }
 
 func (pp *PayloadParser) Parse(data []byte) []*Payload {
+	log.Println("data length,idx, length: ", len(data), pp.idx, pp.length)
+	copy(pp.data, pp.data[pp.idx:pp.idx+pp.length])
 	copy(pp.data[pp.length:], data)
 	pp.length += len(data)
-	num, idx := 0, 0
-	for ; num < MaxQ && idx < pp.length; num++ {
-		l := int(pp.data[idx])
-		pp.payloads[num].Load(pp.data[idx+1 : idx+1+l])
+	pp.idx = 0
+	num, idx, l := 0, 0, 0
+	for ; num < MaxQ; num++ {
+		l = int(pp.data[idx])
 		idx += l + 1
+		if idx > pp.length {
+			break
+		}
+		pp.payloads[num].Load(pp.data[idx-l : idx])
+		pp.idx = idx
 	}
-	pp.length -= idx
-
+	pp.length -= pp.idx
+	log.Println("data length, num, idx, length, remain l: ", len(data), num, pp.idx, pp.length, l)
 	return pp.payloads[:num]
 }
 

@@ -64,7 +64,6 @@ func (client *ClientNode) handle(worker *Node) {
 		select {
 		case req, ok := <-worker.ReqData:
 			if !ok {
-				close(worker.ResData)
 				return
 			}
 			message := &pb.Message{}
@@ -132,18 +131,6 @@ func (cn *ClientNode) send(worker *Node) {
 		}
 	}
 }
-func (cn *ClientNode) registerManager() {
-	for {
-		select {
-		case conn := <-cn.register:
-			conn.Open()
-			log.Printf("Worker %s registered\n", conn.Info.String())
-		case conn := <-cn.unregister:
-			conn.Close()
-			log.Printf("Worker %s unregistered\n", conn.Info.String())
-		}
-	}
-}
 
 //负责send报文
 func (client *ClientNode) run() {
@@ -153,6 +140,9 @@ func (client *ClientNode) run() {
 		case worker_node, ok := <-client.WorkerList:
 			if !ok {
 				return
+			}
+			if !worker_node.Ok {
+				continue
 			}
 			log.Println("worker", worker_node.Info)
 			calcType := string(calctypes[rand.Intn(len(calctypes))])
@@ -198,6 +188,13 @@ func (client *ClientNode) run() {
 			PrintIfErr(err)
 			log.Println("I will send ", calcReq.Calcreq.Type)
 			worker_node.ResData <- calcReqData
+		case conn := <-client.register:
+			conn.Open()
+			log.Printf("Worker %s registered\n", conn.Info.String())
+		case conn := <-client.unregister:
+			conn.Close()
+			close(conn.ResData)
+			log.Printf("Worker %s unregistered\n", conn.Info.String())
 		}
 	}
 }
