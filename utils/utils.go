@@ -20,19 +20,26 @@ type Node struct {
 	Socket     net.Conn
 	Ok         bool
 	Info       net.Addr
+	Window     chan byte
 	ReqData    chan []byte
 	ResData    chan []byte
 	ListenAddr string
 }
 
 func NewNode(conn net.Conn) *Node {
-	return &Node{
+	node := &Node{
 		Socket:  conn,
 		Ok:      false,
 		Info:    conn.RemoteAddr(),
+		Window:  make(chan byte, MaxQ),
 		ReqData: make(chan []byte),
 		ResData: make(chan []byte),
 	}
+	for i := 0; i < MaxQ; i++ {
+		node.Window <- 0
+	}
+
+	return node
 }
 
 func (node *Node) Open() {
@@ -46,6 +53,14 @@ func (node *Node) Close() {
 		node.Ok = false
 		node.Socket.Close()
 	}
+}
+
+func (node *Node) Acquire() {
+	<-node.Window
+}
+
+func (node *Node) Release() {
+	node.Window <- 0
 }
 
 type Payload struct {
@@ -97,7 +112,7 @@ func NewPayloadParser() *PayloadParser {
 }
 
 func (pp *PayloadParser) Parse(data []byte) []*Payload {
-	log.Println("data length,idx, length: ", len(data), pp.idx, pp.length)
+	//log.Println("data length,idx, length: ", len(data), pp.idx, pp.length)
 	copy(pp.data, pp.data[pp.idx:pp.idx+pp.length])
 	copy(pp.data[pp.length:], data)
 	pp.length += len(data)
@@ -113,7 +128,7 @@ func (pp *PayloadParser) Parse(data []byte) []*Payload {
 		pp.idx = idx
 	}
 	pp.length -= pp.idx
-	log.Println("data length, num, idx, length, remain l: ", len(data), num, pp.idx, pp.length, l)
+	//log.Println("data length, num, idx, length, remain l: ", len(data), num, pp.idx, pp.length, l)
 	return pp.payloads[:num]
 }
 

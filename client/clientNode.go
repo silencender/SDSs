@@ -53,6 +53,7 @@ func (client *ClientNode) receive(worker *Node) {
 		if length > 0 {
 			payloads := parser.Parse(message[:length])
 			for i := range payloads {
+				worker.Release()
 				worker.ReqData <- payloads[i].Decode()
 			}
 		}
@@ -127,6 +128,7 @@ func (cn *ClientNode) send(worker *Node) {
 				return
 			}
 			payload.Load(message)
+			worker.Acquire()
 			worker.Socket.Write(payload.Encode())
 		}
 	}

@@ -91,7 +91,7 @@ func construct_CALCULATE_RES(Calcreq *pb.CalcReq, seq int32) *pb.Message {
 		if Calcreq.Int32Op2 == 0 {
 			divAns = 0
 			//除0
-			res.Calcres.Status = pb.CalcRes_ERROR
+			CalresMessage.Status = pb.CalcRes_ERROR
 		} else {
 			divAns = Calcreq.Int32Op1 / Calcreq.Int32Op2
 		}
