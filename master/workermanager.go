@@ -19,14 +19,19 @@ type WorkerManager struct {
 
 func (wm *WorkerManager) receive(worker *Node) {
 	message := make([]byte, BufSize)
+	parser := NewPayloadParser()
 	for {
 		length, err := worker.Socket.Read(message)
 		if err != nil {
 			wm.unregister <- worker
+			close(worker.ReqData)
 			break
 		}
 		if length > 0 {
-			worker.ReqData <- message
+			payloads := parser.Parse(message[:length])
+			for i := range payloads {
+				worker.ReqData <- payloads[i].Decode()
+			}
 		}
 	}
 }
@@ -36,17 +41,20 @@ func (wm *WorkerManager) handle(worker *Node) {
 		select {
 		case req, ok := <-worker.ReqData:
 			if !ok {
+				close(worker.ResData)
 				return
 			}
 			message := &pb.Message{}
 			err := proto.Unmarshal(req, message)
 			PrintIfErr(err)
 			res := &pb.Message{
-				Seq: message.GetSeq(),
+				Seq: message.Seq,
 			}
 			switch message.MsgType {
 			case pb.Message_REGISTER_REQ:
 				res.MsgType = pb.Message_REGISTER_RES
+				worker.ListenAddr = message.Socket
+				wm.register <- worker
 			case pb.Message_HEARTBEAT_REQ:
 				res.MsgType = pb.Message_HEARTBEAT_RES
 			}
@@ -58,13 +66,15 @@ func (wm *WorkerManager) handle(worker *Node) {
 }
 
 func (wm *WorkerManager) send(worker *Node) {
+	payload := NewPayload()
 	for {
 		select {
 		case message, ok := <-worker.ResData:
 			if !ok {
 				return
 			}
-			worker.Socket.Write(message)
+			payload.Load(message)
+			worker.Socket.Write(payload.Encode())
 		}
 	}
 }
@@ -74,11 +84,8 @@ func (wm *WorkerManager) listen(addr string) {
 	PrintIfErr(err)
 	for {
 		conn, err := listener.Accept()
-		if err != nil {
-			log.Println(err.Error())
-		}
+		PrintIfErr(err)
 		worker := NewNode(conn)
-		wm.register <- worker
 		go wm.receive(worker)
 		go wm.handle(worker)
 		go wm.send(worker)
@@ -91,11 +98,12 @@ func (wm *WorkerManager) run() {
 		case conn := <-wm.register:
 			conn.Open()
 			wm.workers.PushBack(conn)
-			log.Printf("Worker %s registered\n", conn.Info.String())
+			wm.pworker = wm.workers.Back()
+			log.Printf("Worker %s registered\n", conn.ListenAddr)
 		case conn := <-wm.unregister:
 			conn.Close()
 			RemoveListItem(wm.workers, conn)
-			log.Printf("Worker %s unregistered\n", conn.Info.String())
+			log.Printf("Worker %s unregistered\n", conn.ListenAddr)
 		}
 	}
 }
