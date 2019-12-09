@@ -40,7 +40,7 @@
 
 我们使用google protocal buffer 设计协议，具体的协议如下
 
-![](1.png)
+![](doc/img/1.png)
 
 其中，协议类型包括：
 - REGISTER_REQ 用于W向M注册
@@ -58,7 +58,7 @@
 
 
 具体交互过程如下：
-![](2.png)
+![](doc/img/2.png)
 
 ## 测试
 
