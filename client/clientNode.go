@@ -177,7 +177,7 @@ func (client *ClientNode) run() {
 			case "d":
 				var op1, op2 float64
 				op1 = rand.Float64() * 10000
-				op1 = rand.Float64() * 10000
+				op2 = rand.Float64() * 10000
 				calcReq.Calcreq.Float64Op1 = op1
 				calcReq.Calcreq.Float64Op2 = op2
 				calcReq.Calcreq.Type = pb.CalculateTypes_FLOAT64
