@@ -8,6 +8,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	pb "github.com/silencender/SDSs/protos"
 	. "github.com/silencender/SDSs/utils"
+	"sync"
 )
 
 type WorkerManager struct {
@@ -15,6 +16,7 @@ type WorkerManager struct {
 	pworker    *list.Element
 	register   chan *Node
 	unregister chan *Node
+	lock       sync.Mutex	//pworker临界区资源互斥
 }
 
 func (wm *WorkerManager) receive(worker *Node) {
@@ -114,11 +116,13 @@ func (wm *WorkerManager) SelectWorker() *Node {
 	}
 	var worker *Node
 	for {
+		wm.lock.Lock()
 		if wm.pworker == wm.workers.Back() {
 			wm.pworker = wm.workers.Front()
 		} else {
 			wm.pworker = wm.pworker.Next()
 		}
+		wm.lock.Unlock()
 		worker = wm.pworker.Value.(*Node)
 		if worker.Ok {
 			return worker
