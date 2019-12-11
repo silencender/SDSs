@@ -1,0 +1,91 @@
+syntax = "proto3";
+package protos;
+
+enum CalculateTypes {
+        INTEGER32 = 0;
+        INTEGER64 = 1;
+        FLOAT32 = 2;
+        FLOAT64 = 3;
+    }
+message CalcReq{
+	CalculateTypes Type = 1;
+	oneof op1 {
+    		int32 int32op1 = 3;
+    		int64 int64op1 = 4;
+    		float float32op1 = 5;
+    		double float64op1 = 6;
+    	}
+    oneof op2 {
+        		int32 int32op2 = 7;
+        		int64 int64op2 = 8;
+        		float float32op2 = 9;
+        		double float64op2 = 10;
+        	}
+}
+
+
+//定义四种返回值类型字段
+message Int32Ans {
+  	sint32 AddInt32 = 1;
+	sint32 MinInt32 = 2;
+	sint32 MulInt32 = 3;
+	sint32 DivInt32 = 4;
+}
+message Int64Ans {
+  	sint64 AddInt64 = 1;
+	sint64 MinInt64 = 2;
+	sint64 MulInt64 = 3;
+	sint64 DivInt64 = 4;
+}
+message Float32Ans {
+  	float AddFloat32 = 1;
+	float MinFloat32 = 2;
+	float MulFloat32 = 3;
+	float DivFloat32 = 4;
+}
+message Float64Ans {
+  	double AddFloat64 = 1;
+	double MinFloat64 = 2;
+	double MulFloat64 = 3;
+	double DivFloat64 = 4;
+}
+
+message CalcRes{
+    enum CalcStatus {
+        OK = 0;
+        ERROR = 1;
+    }
+	CalculateTypes Type = 1;
+	CalcStatus Status = 2;
+	oneof Result {
+		Int32Ans int32ans = 3;
+		Int64Ans int64ans = 4;
+		Float32Ans float32ans = 5;
+		Float64Ans float64ans = 6;
+	}
+
+}
+
+//worker向master注册的过程
+
+message Message{
+    enum MessageType {
+        REGISTER_REQ = 0;
+        REGISTER_RES = 1;
+        HEARTBEAT_REQ = 2;
+        HEARTBEAT_RES = 3;
+        QUERY_REQ = 4;
+        QUERY_RES = 5;
+        CALCULATE_REQ = 6;
+        CALCULATE_RES = 7;
+    }
+    MessageType msgType = 1;
+    //可能返回的关于worker的socket信息
+    int32 seq = 2;
+    string socket = 3;
+    //注意这个socket复用了，在worker向master注册时用于表示自己的端口号，在client查询时，master返回的是worker的IP：Port
+    CalcReq calcreq = 4;
+    CalcRes calcres = 5;
+}
+
+//client向worker发送计算请求
